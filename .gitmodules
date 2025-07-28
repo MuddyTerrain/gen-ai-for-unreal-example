@@ -1,0 +1,3 @@
+[submodule "Plugins/GenAIForUnreal"]
+	path = Plugins/GenAIForUnreal
+	url = https://github.com/MuddyTerrain/GenAIForUnreal
