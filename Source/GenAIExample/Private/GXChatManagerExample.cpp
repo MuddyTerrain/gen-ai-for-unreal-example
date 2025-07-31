@@ -18,8 +18,6 @@ void AGXChatManagerExample::BeginPlay()
 	Super::BeginPlay();
 
 	// Create and display the dedicated UI for the C++ example
-	// CORRECTED: Replaced deprecated IsClient() with GetNetMode() check.
-	// This ensures UI is not created on a dedicated server.
 	if (GetWorld() && GetWorld()->GetNetMode() != NM_DedicatedServer && CppChatWidgetClass)
 	{
 		ChatWidgetInstance = CreateWidget<UUserWidget>(GetWorld(), CppChatWidgetClass);
