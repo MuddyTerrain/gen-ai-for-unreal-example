@@ -1,11 +1,41 @@
 // Copyright 2025, Muddy Terrain Games, All Rights Reserved.
 
-
 #include "OpenAI/GXOpenAIChatExample.h"
 #include "Models/OpenAI/GenOAIChat.h"         // For non-streaming
 #include "Models/OpenAI/GenOAIChatStream.h"  // For streaming
 #include "Utilities/GenUtils.h"
 #include "Misc/Paths.h"
+#include "UObject/UObjectGlobals.h"
+#include "UObject/EnumProperty.h"
+
+/**
+ * @brief Converts a model name string to the corresponding EOpenAIChatModel enum value.
+ *
+ * This allows for flexible model selection from Blueprints or external configuration files.
+ * It iterates through the known enum values and compares them against the input string.
+ * If no match is found, it defaults to 'Custom', allowing the system to use the
+ * input string as a custom model identifier.
+ *
+ * @param ModelName The model name to convert.
+ * @return The corresponding EOpenAIChatModel enum value.
+ */
+static EOpenAIChatModel StringToOpenAIChatModel(const FString& ModelName)
+{
+    const UEnum* EnumPtr = StaticEnum<EOpenAIChatModel>();
+    if (EnumPtr)
+    {
+        for (int32 i = 0; i < EnumPtr->NumEnums() - 1; ++i)
+        {
+            if (ModelName.Equals(OpenAIChatModelToString(static_cast<EOpenAIChatModel>(EnumPtr->GetValueByIndex(i))), ESearchCase::IgnoreCase))
+            {
+                return static_cast<EOpenAIChatModel>(EnumPtr->GetValueByIndex(i));
+            }
+        }
+    }
+    // If no standard model matches, treat it as a custom model identifier.
+    return EOpenAIChatModel::Custom;
+}
+
 
 AGXOpenAIChatExample::AGXOpenAIChatExample()
 {
@@ -20,7 +50,7 @@ void AGXOpenAIChatExample::ClearConversation()
     ConversationHistory.Add(FGenChatMessage(TEXT("system"), TEXT("You are a helpful assistant integrated into an Unreal Engine application.")));
 }
 
-void AGXOpenAIChatExample::RequestNonStreamingChat(const FString& UserMessage, const FString& ImagePath)
+void AGXOpenAIChatExample::RequestNonStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& ImagePath)
 {
     // 1. Construct the message content (text and optional image)
     TArray<FGenAIMessageContent> MessageContent;
@@ -36,7 +66,14 @@ void AGXOpenAIChatExample::RequestNonStreamingChat(const FString& UserMessage, c
 
     // 3. Configure the chat settings
     FGenOAIChatSettings ChatSettings;
-    ChatSettings.Model = EOpenAIChatModel::GPT_4o; // Use a powerful multimodal model
+    
+    // Set the model from the input string
+    ChatSettings.Model = StringToOpenAIChatModel(ModelName);
+    if (ChatSettings.Model == EOpenAIChatModel::Custom)
+    {
+        ChatSettings.CustomModelName = ModelName;
+    }
+
     ChatSettings.Messages = ConversationHistory;
     ChatSettings.MaxTokens = 1500;
     ChatSettings.bStream = false;
@@ -68,7 +105,7 @@ void AGXOpenAIChatExample::RequestNonStreamingChat(const FString& UserMessage, c
     );
 }
 
-void AGXOpenAIChatExample::RequestStreamingChat(const FString& UserMessage, const FString& ImagePath)
+void AGXOpenAIChatExample::RequestStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& ImagePath)
 {
     // 1. Construct the message content
     TArray<FGenAIMessageContent> MessageContent;
@@ -84,7 +121,14 @@ void AGXOpenAIChatExample::RequestStreamingChat(const FString& UserMessage, cons
 
     // 3. Configure settings
     FGenOAIChatSettings ChatSettings;
-    ChatSettings.Model = EOpenAIChatModel::GPT_4o;
+    
+    // Set the model from the input string
+    ChatSettings.Model = StringToOpenAIChatModel(ModelName);
+    if (ChatSettings.Model == EOpenAIChatModel::Custom)
+    {
+        ChatSettings.CustomModelName = ModelName;
+    }
+
     ChatSettings.Messages = ConversationHistory;
     ChatSettings.bStream = true; // Implicitly handled, but good for clarity
 

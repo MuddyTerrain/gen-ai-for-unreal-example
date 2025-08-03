@@ -1,14 +1,17 @@
+// Copyright 2025, Muddy Terrain Games, All Rights Reserved.
+
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Data/OpenAI/GenOAIChatStructs.h" // Correct struct for chat settings
-#include "Http.h"                          // For TWeakObjectPtr and request management
-#include "GXOpenAIChatExample.generated.h"
+#include "Data/GenAIMessageStructs.h" // For FGenChatMessage
+#include "Http.h" // For TWeakObjectPtr and request management
+#include "GXDeepSeekChatExample.generated.h"
 
 // -- BLUEPRINT-FRIENDLY DELEGATES FOR UI --
 
-struct FGenOpenAIStreamEvent;
+struct FGenDeepSeekStreamEvent;
+
 // Broadcasts the final, complete AI response for non-streaming calls
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUINonStreamingResponse, const FString&, Message, bool, bSuccess);
 
@@ -23,12 +26,12 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUIStreamingError, const FString&,
 
 
 UCLASS()
-class GENAIEXAMPLE_API AGXOpenAIChatExample : public AActor
+class GENAIEXAMPLE_API AGXDeepSeekChatExample : public AActor
 {
     GENERATED_BODY()
 
 public:
-    AGXOpenAIChatExample();
+    AGXDeepSeekChatExample();
 
 protected:
     // Called when the actor is being destroyed
@@ -38,20 +41,18 @@ public:
     /**
      * @brief Sends a user message for a complete, non-streaming response.
      * @param UserMessage The text from the user.
-     * @param ModelName The name of the OpenAI chat model to use.
-     * @param ImagePath (Optional) The full local path to an image for multimodal chat.
+     * @param ModelName The name of the DeepSeek chat model to use (e.g., "deepseek-chat").
      */
-    UFUNCTION(BlueprintCallable, Category = "GenAI|OpenAI Examples")
-    void RequestNonStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& ImagePath);
+    UFUNCTION(BlueprintCallable, Category = "GenAI|DeepSeek Examples")
+    void RequestNonStreamingChat(const FString& UserMessage, const FString& ModelName);
 
     /**
      * @brief Sends a user message for a streaming response.
      * @param UserMessage The text from the user.
-     * @param ModelName The name of the OpenAI chat model to use.
-     * @param ImagePath (Optional) The full local path to an image for multimodal chat.
+     * @param ModelName The name of the DeepSeek chat model to use (e.g., "deepseek-chat").
      */
-    UFUNCTION(BlueprintCallable, Category = "GenAI|OpenAI Examples")
-    void RequestStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& ImagePath);
+    UFUNCTION(BlueprintCallable, Category = "GenAI|DeepSeek Examples")
+    void RequestStreamingChat(const FString& UserMessage, const FString& ModelName);
     
     /** Clears the chat history. */
     UFUNCTION(BlueprintCallable, Category = "GenAI | UI Example")
@@ -73,16 +74,16 @@ public:
 
 private:
     // -- CORE PLUGIN INTEGRATION --
-
-    /** Handles the response from the streaming chat request. */
-    void OnStreamingChatEvent(const FGenOpenAIStreamEvent& StreamEvent);
+    
+    /** Handles incoming events from the streaming chat request. */
+    void OnStreamingChatEvent(const FGenDeepSeekStreamEvent& StreamEvent);
 
     // -- STATE MANAGEMENT --
 
-    /** Stores the conversation history. Uses the correct FGenChatMessage struct. */
+    /** Stores the full conversation history, including system, user, and assistant messages. */
     TArray<FGenChatMessage> ConversationHistory;
      
-    /** Keeps track of the active HTTP requests to allow cancellation. */
+    /** Keeps track of the active HTTP requests to allow for cancellation. */
     FHttpRequestPtr ActiveRequestNonStreaming;
     FHttpRequestPtr ActiveRequestStreaming;
 };
