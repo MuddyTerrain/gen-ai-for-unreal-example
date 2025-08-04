@@ -27,7 +27,7 @@ void AGXGoogleImageExample::RequestGoogleImage(const FString& Prompt, const FStr
 
 	FGenGoogleImageSettings Settings;
 	Settings.Prompt = Prompt;
-	Settings.Model = UGenUtils::StringToModel<EGenGoogleImageModel>(ModelName, GenGoogleImageModelToString, EGenGoogleImageModel::Imagen_3_0_Generate_Preview_06_06);
+	Settings.Model = UGenUtils::StringToModel<EGenGoogleImageModel>(ModelName, GenGoogleImageModelToString, EGenGoogleImageModel::Imagen_3_0_Generate_002);
 	Settings.AspectRatio = EGenGoogleImageAspectRatio::Ratio_1_1;
 	Settings.NumberOfImages = 1;
 
