@@ -4,22 +4,12 @@
 #include "GameFramework/Actor.h"
 #include "Data/OpenAI/GenOAIChatStructs.h" // Correct struct for chat settings
 #include "Http.h"                          // For TWeakObjectPtr and request management
+#include "XAI/GXXAIChatExample.h"
 #include "GXOpenAIChatExample.generated.h"
 
 // -- BLUEPRINT-FRIENDLY DELEGATES FOR UI --
 
 struct FGenOpenAIStreamEvent;
-// Broadcasts the final, complete AI response for non-streaming calls
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUINonStreamingResponse, const FString&, Message, bool, bSuccess);
-
-// Broadcasts a piece of a streaming response (a "delta")
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUIStreamingResponseDelta, const FString&, DeltaContent);
-
-// Signals that the entire streaming response is complete
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUIStreamingResponseCompleted, const FString&, FullMessage);
-
-// Signals an error occurred during streaming
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUIStreamingError, const FString&, ErrorMessage);
 
 
 UCLASS()
