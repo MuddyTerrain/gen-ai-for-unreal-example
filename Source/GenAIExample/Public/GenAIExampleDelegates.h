@@ -18,6 +18,13 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUIStreamingError, const FString&,
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnImageGenerated, UTexture2D*, GeneratedTexture, bool, bSuccess);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnImageGenerationError, const FString&, ErrorMessage);
 
+
+// -- Text-to-Speech/Transcription Delegates --
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnUITTSResponse, const TArray<uint8>&, AudioData, const FString&, Error, bool, bSuccess);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUITranscriptionResponse, const FString&, TranscribedText, bool, bSuccess);
+
+
 /**
  * 
  */

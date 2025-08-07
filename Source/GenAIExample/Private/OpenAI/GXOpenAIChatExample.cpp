@@ -1,8 +1,8 @@
 // Copyright 2025, Muddy Terrain Games, All Rights Reserved.
 
 #include "OpenAI/GXOpenAIChatExample.h"
-#include "Models/OpenAI/GenOAIChat.h"         // For non-streaming
-#include "Models/OpenAI/GenOAIChatStream.h"  // For streaming
+#include "Models/OpenAI/GenOAIChat.h"
+#include "Models/OpenAI/GenOAIChatStream.h"
 #include "Utilities/GenUtils.h"
 #include "Misc/Paths.h"
 #include "UObject/UObjectGlobals.h"
@@ -21,19 +21,7 @@
  */
 static EOpenAIChatModel StringToOpenAIChatModel(const FString& ModelName)
 {
-    const UEnum* EnumPtr = StaticEnum<EOpenAIChatModel>();
-    if (EnumPtr)
-    {
-        for (int32 i = 0; i < EnumPtr->NumEnums() - 1; ++i)
-        {
-            if (ModelName.Equals(OpenAIChatModelToString(static_cast<EOpenAIChatModel>(EnumPtr->GetValueByIndex(i))), ESearchCase::IgnoreCase))
-            {
-                return static_cast<EOpenAIChatModel>(EnumPtr->GetValueByIndex(i));
-            }
-        }
-    }
-    // If no standard model matches, treat it as a custom model identifier.
-    return EOpenAIChatModel::Custom;
+    return UGenUtils::StringToModel<EOpenAIChatModel>(ModelName, OpenAIChatModelToString, EOpenAIChatModel::Custom);
 }
 
 
@@ -164,8 +152,7 @@ void AGXOpenAIChatExample::OnStreamingChatEvent(const FGenOpenAIStreamEvent& Str
             break;
 
         case EOpenAIStreamEventType::ResponseCompleted:
-            // The stream is done. The 'DeltaContent' now holds the *full* message.
-            UE_LOG(LogTemp, Log, TEXT("Stream complete. Full message: %s"), *StreamEvent.DeltaContent);
+            // The stream is done. The 'DeltaContent' now holds the rest of the message if any... 
             ConversationHistory.Add(FGenChatMessage(TEXT("assistant"), StreamEvent.DeltaContent));
             OnUIStreamingResponseCompleted.Broadcast(StreamEvent.DeltaContent);
             ActiveRequestStreaming.Reset();
