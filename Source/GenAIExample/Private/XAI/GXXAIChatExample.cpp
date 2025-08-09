@@ -28,17 +28,17 @@ void AGXXAIChatExample::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
-void AGXXAIChatExample::RequestNonStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& ImagePath)
+void AGXXAIChatExample::RequestNonStreamingChat(const FString& UserMessage, const FString& ModelName, UTexture2D* Image)
 {
 	if (ActiveRequestNonStreaming.IsValid()) return;
 
 	// 1. Construct the multimodal message content
 	TArray<FGenAIMessageContent> MessageContent;
 	MessageContent.Add(FGenAIMessageContent::FromText(UserMessage));
-	if (!ImagePath.IsEmpty() && FPaths::FileExists(ImagePath))
+	if (Image != nullptr)
 	{
 		// XAI API expects a base64-encoded image URL string
-		MessageContent.Add(FGenAIMessageContent::FromImagePath(ImagePath, EGenAIImageDetail::Auto));
+		MessageContent.Add(FGenAIMessageContent::FromTexture2D(Image, EGenAIImageDetail::Auto));
 	}
 
 	// 2. Add the complete user message to our history
@@ -79,16 +79,16 @@ void AGXXAIChatExample::RequestNonStreamingChat(const FString& UserMessage, cons
 	);
 }
 
-void AGXXAIChatExample::RequestStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& ImagePath)
+void AGXXAIChatExample::RequestStreamingChat(const FString& UserMessage, const FString& ModelName, UTexture2D* Image)
 {
 	if (ActiveRequestStreaming.IsValid()) return;
 
 	// 1. Construct the multimodal message content
 	TArray<FGenAIMessageContent> MessageContent;
 	MessageContent.Add(FGenAIMessageContent::FromText(UserMessage));
-	if (!ImagePath.IsEmpty() && FPaths::FileExists(ImagePath))
+	if (Image != nullptr)
 	{
-		MessageContent.Add(FGenAIMessageContent::FromImagePath(ImagePath, EGenAIImageDetail::Auto));
+		MessageContent.Add(FGenAIMessageContent::FromTexture2D(Image, EGenAIImageDetail::Auto));
 	}
 
 	// 2. Add to history

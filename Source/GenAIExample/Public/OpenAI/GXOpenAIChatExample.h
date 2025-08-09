@@ -29,19 +29,19 @@ public:
      * @brief Sends a user message for a complete, non-streaming response.
      * @param UserMessage The text from the user.
      * @param ModelName The name of the OpenAI chat model to use.
-     * @param ImagePath (Optional) The full local path to an image for multimodal chat.
+     * @param Image (Optional) A UTexture2D asset for multimodal chat.
      */
     UFUNCTION(BlueprintCallable, Category = "GenAI|OpenAI Examples")
-    void RequestNonStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& ImagePath);
+    void RequestNonStreamingChat(const FString& UserMessage, const FString& ModelName, UTexture2D* Image = nullptr);
 
     /**
      * @brief Sends a user message for a streaming response.
      * @param UserMessage The text from the user.
      * @param ModelName The name of the OpenAI chat model to use.
-     * @param ImagePath (Optional) The full local path to an image for multimodal chat.
+     * @param Image (Optional) A UTexture2D asset for multimodal chat.
      */
     UFUNCTION(BlueprintCallable, Category = "GenAI|OpenAI Examples")
-    void RequestStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& ImagePath);
+    void RequestStreamingChat(const FString& UserMessage, const FString& ModelName, UTexture2D* Image = nullptr);
     
     /** Clears the chat history. */
     UFUNCTION(BlueprintCallable, Category = "GenAI | UI Example")

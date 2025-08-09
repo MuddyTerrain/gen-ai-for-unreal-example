@@ -38,15 +38,15 @@ void AGXOpenAIChatExample::ClearConversation()
     ConversationHistory.Add(FGenChatMessage(TEXT("system"), TEXT("You are a helpful assistant integrated into an Unreal Engine application.")));
 }
 
-void AGXOpenAIChatExample::RequestNonStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& ImagePath)
+void AGXOpenAIChatExample::RequestNonStreamingChat(const FString& UserMessage, const FString& ModelName, UTexture2D* Image)
 {
     // 1. Construct the message content (text and optional image)
     TArray<FGenAIMessageContent> MessageContent;
     MessageContent.Add(FGenAIMessageContent::FromText(UserMessage));
     
-    if (!ImagePath.IsEmpty() && FPaths::FileExists(ImagePath))
+    if (Image != nullptr)
     {
-        MessageContent.Add(FGenAIMessageContent::FromImagePath(ImagePath, EGenAIImageDetail::Auto));
+        MessageContent.Add(FGenAIMessageContent::FromTexture2D(Image, EGenAIImageDetail::Auto));
     }
 
     // 2. Add the complete user message to our history
@@ -93,15 +93,15 @@ void AGXOpenAIChatExample::RequestNonStreamingChat(const FString& UserMessage, c
     );
 }
 
-void AGXOpenAIChatExample::RequestStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& ImagePath)
+void AGXOpenAIChatExample::RequestStreamingChat(const FString& UserMessage, const FString& ModelName, UTexture2D* Image)
 {
     // 1. Construct the message content
     TArray<FGenAIMessageContent> MessageContent;
     MessageContent.Add(FGenAIMessageContent::FromText(UserMessage));
 
-    if (!ImagePath.IsEmpty() && FPaths::FileExists(ImagePath))
+    if (Image != nullptr)
     {
-        MessageContent.Add(FGenAIMessageContent::FromImagePath(ImagePath, EGenAIImageDetail::Auto));
+        MessageContent.Add(FGenAIMessageContent::FromTexture2D(Image, EGenAIImageDetail::Auto));
     }
     
     // 2. Add to history
