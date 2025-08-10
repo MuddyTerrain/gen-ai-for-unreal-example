@@ -7,9 +7,9 @@
 #include "Components/AudioComponent.h"
 #include "GXOpenAIRealtimeExample.generated.h"
 
-// Forward declarations to keep header dependencies clean
+// Forward declarations
 class UGenOAIRealtime;
-class UAudioCaptureComponent;
+class URealtimeAudioCaptureComponent;
 class USoundWaveProcedural;
 
 /** Defines the current state of the real-time voice conversation. */
@@ -18,22 +18,19 @@ enum class ERealtimeConversationState : uint8
 {
     Idle			UMETA(DisplayName = "Idle"),
     Connecting		UMETA(DisplayName = "Connecting..."),
-    Connected		UMETA(DisplayName = "Connected & Ready"),
-    Listening		UMETA(DisplayName = "Listening (User Speaking)"),
+    Connected_Ready UMETA(DisplayName = "Ready (Listening for Speech)"),
+    UserIsSpeaking	UMETA(DisplayName = "User Speaking"),
     WaitingForAI	UMETA(DisplayName = "Waiting for AI"),
     SpeakingAI		UMETA(DisplayName = "AI Speaking")
 };
 
-// Delegate to broadcast state changes to the UI
+// UI Delegates
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnRealtimeStateChanged, ERealtimeConversationState, NewState);
-// Delegate for the user's live transcribed speech
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUserTranscriptUpdated, const FString&, Transcript);
-// Delegate for the AI's complete text response
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAIResponseUpdated, const FString&, AIResponse);
 
-
 /**
- * An example actor demonstrating a full, back-and-forth voice conversation
+ * An example actor demonstrating a full, hands-free voice conversation with Voice Activity Detection (VAD)
  * using the OpenAI Realtime API service.
  */
 UCLASS()
@@ -47,104 +44,73 @@ public:
 protected:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+    virtual void Tick(float DeltaSeconds) override;
 
 public:
     //~=============================================================================
-    //~ Connection and Session Management
+    //~ VAD Settings (Editable in Blueprint)
     //~=============================================================================
 
-    /** Connects to the Realtime service and starts a session. */
-    UFUNCTION(BlueprintCallable, Category = "GenAI|OpenAI|Realtime Example")
-    void StartConversation(const FString& Model = TEXT("gpt-4o"), const FString& SystemPrompt = TEXT("You are a helpful and friendly voice assistant."));
+    /** The volume threshold to trigger speech detection. Increase if background noise is an issue. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GenAI|VAD Settings")
+    float VoiceActivationThreshold = 0.02f;
 
-    /** Disconnects from the Realtime service and ends the session. */
-    UFUNCTION(BlueprintCallable, Category = "GenAI|OpenAI|Realtime Example")
-    void EndConversation();
+    /** How long the user must be silent (in seconds) before their speech is sent to the AI. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GenAI|VAD Settings")
+    float SilenceTimeout = 1.0f;
 
     //~=============================================================================
-    //~ User Interaction (Push-to-Talk)
+    //~ Conversation Control
     //~=============================================================================
 
-    /** Call this when the user starts speaking (e.g., push-to-talk key is pressed). */
+    /** Starts or stops the voice conversation. */
     UFUNCTION(BlueprintCallable, Category = "GenAI|OpenAI|Realtime Example")
-    void StartSpeaking();
-
-    /** Call this when the user stops speaking (e.g., push-to-talk key is released). */
-    UFUNCTION(BlueprintCallable, Category = "GenAI|OpenAI|Realtime Example")
-    void StopSpeaking();
+    void ToggleConversation(bool bShouldStart, const FString& Model = TEXT("gpt-4o"), const FString& SystemPrompt = TEXT("You are a helpful and friendly voice assistant."));
 
     //~=============================================================================
     //~ Blueprint Delegates for UI
     //~=============================================================================
 
-    /** Broadcasts whenever the conversation state changes. */
     UPROPERTY(BlueprintAssignable, Category = "GenAI|OpenAI|Realtime Example")
     FOnRealtimeStateChanged OnStateChanged;
 
-    /** Broadcasts the live transcript of the user's speech as it's understood by the AI. */
     UPROPERTY(BlueprintAssignable, Category = "GenAI|OpenAI|Realtime Example")
     FOnUserTranscriptUpdated OnUserTranscriptUpdated;
 
-    /** Broadcasts the AI's text response as it's being generated. */
     UPROPERTY(BlueprintAssignable, Category = "GenAI|OpenAI|Realtime Example")
     FOnAIResponseUpdated OnAIResponseUpdated;
 
 private:
     //~=============================================================================
-    //~ Internal Handlers for Realtime Service Events
+    //~ Internal Handlers & Logic
     //~=============================================================================
     
-    UFUNCTION()
-    void HandleRealtimeConnected(const FString& SessionId);
-    
-    UFUNCTION()
-    void HandleRealtimeConnectionError(int32 StatusCode, const FString& Reason, bool bWasClean);
-    
-    UFUNCTION()
-    void HandleRealtimeDisconnected();
-    
-    UFUNCTION()
-    void HandleRealtimeTextResponse(const FString& Text);
-    
-    UFUNCTION()
-    void HandleRealtimeAudioResponse(const TArray<uint8>& AudioData);
-    
-    UFUNCTION()
-    void HandleRealtimeTranscriptDelta(const FString& TranscriptDelta);
+    UFUNCTION() void HandleRealtimeConnected(const FString& SessionId);
+    UFUNCTION() void HandleRealtimeConnectionError(int32 StatusCode, const FString& Reason, bool bWasClean);
+    UFUNCTION() void HandleRealtimeDisconnected();
+    UFUNCTION() void HandleRealtimeTextResponse(const FString& Text);
+    UFUNCTION() void HandleRealtimeAudioResponse(const TArray<uint8>& AudioData);
+    UFUNCTION() void HandleRealtimeTranscriptDelta(const FString& TranscriptDelta);
 
-    /** Called by the AudioCaptureComponent with new raw microphone data. */
-    void OnAudioCaptured(const float* InAudio, int32 NumSamples);
-
-    /** Helper function to change the current state and broadcast the change. */
+    void HandleAudioGenerated(const float* InAudio, int32 NumSamples);
+    void OnSilenceDetected();
     void SetState(ERealtimeConversationState NewState);
 
     //~=============================================================================
     //~ Components and Services
     //~=============================================================================
 
-    /** The underlying OpenAI Realtime service that handles the WebSocket connection. */
-    UPROPERTY()
-    TObjectPtr<UGenOAIRealtime> RealtimeService;
-
-    /** Component to capture live microphone audio. */
-    UPROPERTY()
-    TObjectPtr<UAudioCaptureComponent> AudioCapture;
-
-    /** Component to play back the AI's audio response. */
-    UPROPERTY()
-    TObjectPtr<UAudioComponent> AIAudioPlayer;
-
-    /** The procedural sound wave that holds the AI's streaming audio response. */
-    UPROPERTY()
-    TObjectPtr<USoundWaveProcedural> AIResponseWave;
+    UPROPERTY() TObjectPtr<UGenOAIRealtime> RealtimeService;
+    UPROPERTY() TObjectPtr<URealtimeAudioCaptureComponent> AudioCapture;
+    UPROPERTY() TObjectPtr<UAudioComponent> AIAudioPlayer;
+    UPROPERTY() TObjectPtr<USoundWaveProcedural> AIResponseWave;
 
     //~=============================================================================
     //~ Internal State
     //~=============================================================================
 
-    UPROPERTY()
-    ERealtimeConversationState CurrentState;
-
+    UPROPERTY() ERealtimeConversationState CurrentState;
+    FTimerHandle SilenceTimer;
     FString FullUserTranscript;
     FString FullAIResponse;
     FString CachedSystemPrompt;

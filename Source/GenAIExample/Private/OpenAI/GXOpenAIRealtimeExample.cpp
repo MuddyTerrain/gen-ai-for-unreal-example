@@ -2,21 +2,19 @@
 
 #include "OpenAI/GXOpenAIRealtimeExample.h"
 
+#include "Components/RealtimeAudioCaptureComponent.h"
 #include "Models/OpenAI/GenOAIRealtime.h"
-#include "AudioCapture/Public/AudioCaptureComponent.h"
 #include "Sound/SoundWaveProcedural.h"
-#include "Utilities/GenAIAudioUtils.h" // Your audio utilities
 
 AGXOpenAIRealtimeExample::AGXOpenAIRealtimeExample()
 {
-    PrimaryActorTick.bCanEverTick = false;
+    PrimaryActorTick.bCanEverTick = true; // VAD needs Tick
     CurrentState = ERealtimeConversationState::Idle;
 
-    // Create the audio capture component to get microphone input
-    AudioCapture = CreateDefaultSubobject<UAudioCaptureComponent>(TEXT("AudioCapture"));
+    AudioCapture = CreateDefaultSubobject<URealtimeAudioCaptureComponent>(TEXT("AudioCapture"));
     AudioCapture->SetupAttachment(RootComponent);
+    AudioCapture->bAutoActivate = false;
 
-    // Create the audio player component to play the AI's voice
     AIAudioPlayer = CreateDefaultSubobject<UAudioComponent>(TEXT("AIAudioPlayer"));
     AIAudioPlayer->SetupAttachment(RootComponent);
     AIAudioPlayer->bAutoActivate = false;
@@ -26,10 +24,7 @@ void AGXOpenAIRealtimeExample::BeginPlay()
 {
     Super::BeginPlay();
     
-    // Create the Realtime Service object that will manage the WebSocket
     RealtimeService = UGenOAIRealtime::CreateRealtimeService(this);
-
-    // Bind to its delegates to receive events from the server
     if (RealtimeService)
     {
         RealtimeService->OnConnectedBP.AddDynamic(this, &AGXOpenAIRealtimeExample::HandleRealtimeConnected);
@@ -40,142 +35,85 @@ void AGXOpenAIRealtimeExample::BeginPlay()
         RealtimeService->OnAudioTranscriptDeltaBP.AddDynamic(this, &AGXOpenAIRealtimeExample::HandleRealtimeTranscriptDelta);
     }
 
-    // Bind to our own audio capture component's delegate
     if (AudioCapture)
     {
-        //AudioCapture->OnAudioCapture.AddUObject(this, &AGXOpenAIRealtimeExample::OnAudioCaptured);
+        AudioCapture->OnAudioGenerated.AddUObject(this, &AGXOpenAIRealtimeExample::HandleAudioGenerated);
     }
 }
 
 void AGXOpenAIRealtimeExample::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-    EndConversation(); // Ensure disconnection on EndPlay
+    ToggleConversation(false);
     Super::EndPlay(EndPlayReason);
 }
 
-void AGXOpenAIRealtimeExample::StartConversation(const FString& Model, const FString& SystemPrompt)
+void AGXOpenAIRealtimeExample::Tick(float DeltaSeconds)
 {
-    if (CurrentState != ERealtimeConversationState::Idle)
+    Super::Tick(DeltaSeconds);
+
+    // If the AI has finished speaking, return to the ready state to listen for the user.
+    if (CurrentState == ERealtimeConversationState::SpeakingAI && AIAudioPlayer && !AIAudioPlayer->IsPlaying())
     {
-        UE_LOG(LogTemp, Warning, TEXT("Cannot start conversation, already in progress. End the current one first."));
-        return;
-    }
-    
-    if (RealtimeService)
-    {
-        SetState(ERealtimeConversationState::Connecting);
-        CachedSystemPrompt = SystemPrompt;
-        RealtimeService->ConnectToServer(Model, false);
+        SetState(ERealtimeConversationState::Connected_Ready);
     }
 }
 
-void AGXOpenAIRealtimeExample::EndConversation()
+void AGXOpenAIRealtimeExample::ToggleConversation(bool bShouldStart, const FString& Model, const FString& SystemPrompt)
 {
-    if (RealtimeService && CurrentState != ERealtimeConversationState::Idle)
+    if (bShouldStart)
     {
-        RealtimeService->DisconnectFromServer();
+        if (CurrentState != ERealtimeConversationState::Idle) return;
+        if (RealtimeService)
+        {
+            SetState(ERealtimeConversationState::Connecting);
+            CachedSystemPrompt = SystemPrompt;
+            RealtimeService->ConnectToServer(Model, false);
+        }
     }
-    // The Disconnected handler will clean up the state
+    else
+    {
+        if (CurrentState == ERealtimeConversationState::Idle) return;
+        if (RealtimeService)
+        {
+            RealtimeService->DisconnectFromServer();
+        }
+    }
 }
-
-void AGXOpenAIRealtimeExample::StartSpeaking()
-{
-    // Allow user to interrupt the AI
-    if (CurrentState != ERealtimeConversationState::Connected && CurrentState != ERealtimeConversationState::SpeakingAI)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Cannot start speaking, not in a connected or AI-speaking state."));
-        return;
-    }
-
-    // Clear previous user transcript for the UI
-    FullUserTranscript.Empty();
-    OnUserTranscriptUpdated.Broadcast(FullUserTranscript);
-    
-    // Clear the server's audio buffer to enable barge-in
-    RealtimeService->ClearInputBuffer();
-    
-    // Stop AI playback if it's currently talking
-    if (AIAudioPlayer->IsPlaying())
-    {
-        AIAudioPlayer->Stop();
-    }
-
-    // Start capturing from the microphone
-    if (AudioCapture)
-    {
-        AudioCapture->Start();
-    }
-
-    SetState(ERealtimeConversationState::Listening);
-}
-
-void AGXOpenAIRealtimeExample::StopSpeaking()
-{
-    if (CurrentState != ERealtimeConversationState::Listening)
-    {
-        return; // Not currently listening, so nothing to do
-    }
-    
-    // Stop capturing microphone audio
-    if (AudioCapture)
-    {
-        AudioCapture->Stop();
-    }
-
-    // Tell the server we are done speaking and want a response
-    if (RealtimeService)
-    {
-        RealtimeService->CommitAndRequestResponse();
-    }
-
-    SetState(ERealtimeConversationState::WaitingForAI);
-}
-
-//~=============================================================================
-//~ Private Handlers
-//~=============================================================================
 
 void AGXOpenAIRealtimeExample::HandleRealtimeConnected(const FString& SessionId)
 {
-    UE_LOG(LogTemp, Log, TEXT("Realtime Example: Connected with Session ID: %s"), *SessionId);
+    UE_LOG(LogTemp, Log, TEXT("Realtime VAD Example: Connected with Session ID: %s"), *SessionId);
     
-    // Set the system prompt now that we are connected
     if (RealtimeService && !CachedSystemPrompt.IsEmpty())
     {
         RealtimeService->SetSystemInstructions(CachedSystemPrompt);
     }
 
-    // Create the procedural sound wave that will receive the AI's audio response
     AIResponseWave = NewObject<USoundWaveProcedural>();
-    AIResponseWave->SetSampleRate(24000); // OpenAI Realtime uses 24kHz
+    AIResponseWave->SetSampleRate(24000);
     AIResponseWave->NumChannels = 1;
     AIResponseWave->Duration = INDEFINITELY_LOOPING_DURATION;
     AIResponseWave->SoundGroup = SOUNDGROUP_Voice;
     AIResponseWave->bLooping = false;
-
-    // Assign our new sound wave to the audio component so it can be played
     AIAudioPlayer->SetSound(AIResponseWave);
     
-    SetState(ERealtimeConversationState::Connected);
+    AudioCapture->Activate(); // Start listening immediately
+    SetState(ERealtimeConversationState::Connected_Ready);
 }
 
 void AGXOpenAIRealtimeExample::HandleRealtimeConnectionError(int32 StatusCode, const FString& Reason, bool bWasClean)
 {
-    UE_LOG(LogTemp, Error, TEXT("Realtime Example: Connection Error %d: %s"), StatusCode, *Reason);
+    UE_LOG(LogTemp, Error, TEXT("Realtime VAD Example: Connection Error %d: %s"), StatusCode, *Reason);
+    AudioCapture->Deactivate();
     SetState(ERealtimeConversationState::Idle);
 }
 
 void AGXOpenAIRealtimeExample::HandleRealtimeDisconnected()
 {
-    UE_LOG(LogTemp, Log, TEXT("Realtime Example: Disconnected."));
-    // if (AudioCapture && AudioCapture->IsCapturing())
-    // {
-    //     AudioCapture->Stop();
-    // }
-    if (AIAudioPlayer && AIAudioPlayer->IsPlaying())
-    {
-        AIAudioPlayer->Stop();
-    }
+    UE_LOG(LogTemp, Log, TEXT("Realtime VAD Example: Disconnected."));
+    GetWorld()->GetTimerManager().ClearTimer(SilenceTimer);
+    if (AudioCapture && AudioCapture->IsActive()) AudioCapture->Deactivate();
+    if (AIAudioPlayer && AIAudioPlayer->IsPlaying()) AIAudioPlayer->Stop();
     SetState(ERealtimeConversationState::Idle);
 }
 
@@ -183,11 +121,9 @@ void AGXOpenAIRealtimeExample::HandleRealtimeTextResponse(const FString& Text)
 {
     if (CurrentState == ERealtimeConversationState::WaitingForAI)
     {
-        // This is the first piece of text from the AI, so change state
         SetState(ERealtimeConversationState::SpeakingAI);
         FullAIResponse.Empty();
     }
-
     FullAIResponse += Text;
     OnAIResponseUpdated.Broadcast(FullAIResponse);
 }
@@ -196,10 +132,7 @@ void AGXOpenAIRealtimeExample::HandleRealtimeAudioResponse(const TArray<uint8>& 
 {
     if (AIResponseWave)
     {
-        // Add the incoming audio chunk to the playback queue
         AIResponseWave->QueueAudio(AudioData.GetData(), AudioData.Num());
-
-        // Start playing if we haven't already
         if (!AIAudioPlayer->IsPlaying())
         {
             AIAudioPlayer->Play();
@@ -213,28 +146,71 @@ void AGXOpenAIRealtimeExample::HandleRealtimeTranscriptDelta(const FString& Tran
     OnUserTranscriptUpdated.Broadcast(FullUserTranscript);
 }
 
-void AGXOpenAIRealtimeExample::OnAudioCaptured(const float* InAudio, int32 NumSamples)
+void AGXOpenAIRealtimeExample::HandleAudioGenerated(const float* InAudio, int32 NumSamples)
 {
-    if (!RealtimeService || CurrentState != ERealtimeConversationState::Listening)
+    if (CurrentState != ERealtimeConversationState::Connected_Ready && CurrentState != ERealtimeConversationState::UserIsSpeaking)
     {
         return;
     }
-    
-    // Convert the raw float audio from the capture component to 16-bit PCM
-    TArray<int16> PcmData;
-    PcmData.SetNumUninitialized(NumSamples);
+
+    // Calculate RMS to get the volume of the audio chunk
+    float Rms = 0.0f;
     for (int32 i = 0; i < NumSamples; ++i)
     {
-        // Clamp and convert to int16 range
-        PcmData[i] = static_cast<int16>(FMath::Clamp(InAudio[i] * 32767.0f, -32768.0f, 32767.0f));
+        Rms += InAudio[i] * InAudio[i];
     }
-    
-    // Create a byte array view of the PCM data to send to the service
-    TArray<uint8> AudioBuffer;
-    AudioBuffer.Append(reinterpret_cast<uint8*>(PcmData.GetData()), NumSamples * sizeof(int16));
+    Rms = FMath::Sqrt(Rms / NumSamples);
 
-    // Send the processed audio chunk to the server
-    RealtimeService->SendAudioToServer(AudioBuffer);
+    // VAD Logic
+    if (Rms > VoiceActivationThreshold)
+    {
+        // User is speaking
+        if (CurrentState == ERealtimeConversationState::Connected_Ready)
+        {
+            // This is the beginning of speech
+            FullUserTranscript.Empty();
+            OnUserTranscriptUpdated.Broadcast(FullUserTranscript);
+            RealtimeService->ClearInputBuffer();
+            SetState(ERealtimeConversationState::UserIsSpeaking);
+        }
+        
+        // We are in the UserIsSpeaking state, so clear the silence timer
+        GetWorld()->GetTimerManager().ClearTimer(SilenceTimer);
+    }
+    else if (CurrentState == ERealtimeConversationState::UserIsSpeaking)
+    {
+        // User was speaking, but is now quiet. Start the silence timer if it's not already running.
+        if (!GetWorld()->GetTimerManager().IsTimerActive(SilenceTimer))
+        {
+            GetWorld()->GetTimerManager().SetTimer(SilenceTimer, this, &AGXOpenAIRealtimeExample::OnSilenceDetected, SilenceTimeout, false);
+        }
+    }
+
+    // If we are in the speaking state, stream the audio data
+    if(CurrentState == ERealtimeConversationState::UserIsSpeaking)
+    {
+        TArray<int16> PcmData;
+        PcmData.SetNumUninitialized(NumSamples);
+        for (int32 i = 0; i < NumSamples; ++i)
+        {
+            PcmData[i] = static_cast<int16>(FMath::Clamp(InAudio[i] * 32767.0f, -32768.0f, 32767.0f));
+        }
+        TArray<uint8> AudioBuffer;
+        AudioBuffer.Append(reinterpret_cast<uint8*>(PcmData.GetData()), NumSamples * sizeof(int16));
+        RealtimeService->SendAudioToServer(AudioBuffer);
+    }
+}
+
+void AGXOpenAIRealtimeExample::OnSilenceDetected()
+{
+    if (CurrentState != ERealtimeConversationState::UserIsSpeaking) return;
+
+    UE_LOG(LogTemp, Log, TEXT("Silence detected. Committing audio and requesting AI response."));
+    if (RealtimeService)
+    {
+        RealtimeService->CommitAndRequestResponse();
+    }
+    SetState(ERealtimeConversationState::WaitingForAI);
 }
 
 void AGXOpenAIRealtimeExample::SetState(ERealtimeConversationState NewState)
