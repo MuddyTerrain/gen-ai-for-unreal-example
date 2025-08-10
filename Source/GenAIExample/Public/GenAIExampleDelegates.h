@@ -21,7 +21,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnImageGenerationError, const FStri
 
 // -- Text-to-Speech/Transcription Delegates --
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnUITTSResponse, const TArray<uint8>&, AudioData, const FString&, Error, bool, bSuccess);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnUITTSResponse, USoundWave*, AudioWave, const FString&, Error, bool, bSuccess);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUITranscriptionResponse, const FString&, TranscribedText, bool, bSuccess);
 
 

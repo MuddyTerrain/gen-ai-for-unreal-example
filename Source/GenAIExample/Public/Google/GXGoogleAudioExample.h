@@ -1,3 +1,5 @@
+// Copyright 2025, Muddy Terrain Games, All Rights Reserved.
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -5,6 +7,7 @@
 #include "GameFramework/Actor.h"
 #include "Data/Google/GenGoogleAudioStructs.h"
 #include "Http.h"
+#include "Sound/SoundSubmix.h"
 #include "GXGoogleAudioExample.generated.h"
 
 UCLASS()
@@ -19,6 +22,10 @@ protected:
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
+    //~=============================================================================
+    //~ TTS and Transcription Requests
+    //~=============================================================================
+    
     /**
      * @brief Sends text to be converted to speech.
      * @param TextToSpeak The text to convert to speech.
@@ -46,9 +53,31 @@ public:
     UFUNCTION(BlueprintCallable, Category = "GenAI|Google Examples")
     void RequestTranscriptionFromData(const TArray<uint8>& AudioData, const FString& ModelName = TEXT("gemini-1.0-pro"), const FString& Prompt = TEXT(""));
 
+    //~=============================================================================
+    //~ Live Audio Recording
+    //~=============================================================================
+
+    /** The submix to capture audio from for transcription. This must be assigned in the editor. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GenAI|Google Examples", meta = (ToolTip = "The submix to capture audio from for transcription."))
+    USoundSubmix* RecordingSubmix;
+    
+    /**
+     * @brief Starts recording audio from the specified submix.
+     * @param ModelName The transcription model to use when recording stops.
+     * @param Prompt The prompt to use when recording stops.
+     */
+    UFUNCTION(BlueprintCallable, Category = "GenAI|Google Examples", meta=(ToolTip="Starts recording audio from the specified submix."))
+    void StartRecording(const FString& ModelName = TEXT("gemini-1.0-pro"), const FString& Prompt = TEXT(""));
+
+    /**
+     * @brief Stops the active recording and sends the captured audio for transcription.
+     */
+    UFUNCTION(BlueprintCallable, Category = "GenAI|Google Examples", meta=(ToolTip="Stops recording and sends the audio for transcription."))
+    void StopRecordingAndTranscribe();
+    
     // -- DELEGATES FOR BLUEPRINT UI --
     
-    /** Called when TTS request completes */
+    /** Called when TTS request completes with a playable SoundWave */
     UPROPERTY(BlueprintAssignable, Category = "GenAI|Events")
     FOnUITTSResponse OnUITTSResponse;
 
@@ -61,8 +90,18 @@ private:
     static EGoogleTTSModel StringToGoogleTTSModel(const FString& ModelName);
     static EGoogleModels StringToGoogleModel(const FString& ModelName);
     static EGoogleAIVoice StringToGoogleVoice(const FString& VoiceName);
+    
+    /** The actual file processing logic, called after a delay to avoid race conditions. */
+    void ProcessRecordedFile(FString BaseFileName);
 
     /** Keeps track of active HTTP requests to allow cancellation */
     TSharedPtr<IHttpRequest> ActiveTTSRequest;
     TSharedPtr<IHttpRequest> ActiveTranscriptionRequest;
+
+    /** Timer handle for the delay between stopping recording and processing the file. */
+    FTimerHandle FileWriteDelayTimer;
+    
+    // -- Internal state for recording --
+    FString TranscriptionModelName;
+    FString TranscriptionPrompt;
 };
