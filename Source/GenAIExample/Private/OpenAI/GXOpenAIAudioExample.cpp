@@ -7,20 +7,10 @@
 #include "Sound/SoundWave.h"
 #include "AudioMixerBlueprintLibrary.h"
 #include "Utilities/GenAIAudioUtils.h"
+#include "Data/OpenAI/GenOAIAudioStructs.h"
 #include "Misc/DateTime.h"
+#include "Utilities/GenUtils.h"
 
-EOpenAITTSModel AGXOpenAIAudioExample::StringToOpenAITTSModel(const FString& ModelName)
-{
-    if (ModelName == TEXT("tts-1")) return EOpenAITTSModel::TTS_1;
-    if (ModelName == TEXT("tts-1-hd")) return EOpenAITTSModel::TTS_1_HD;
-    return EOpenAITTSModel::Custom;
-}
-
-EOpenAITranscriptionModel AGXOpenAIAudioExample::StringToOpenAITranscriptionModel(const FString& ModelName)
-{
-    if (ModelName == TEXT("whisper-1")) return EOpenAITranscriptionModel::Whisper_1;
-    return EOpenAITranscriptionModel::Custom;
-}
 
 AGXOpenAIAudioExample::AGXOpenAIAudioExample()
 {
@@ -50,11 +40,7 @@ void AGXOpenAIAudioExample::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void AGXOpenAIAudioExample::RequestTextToSpeech(const FString& TextToSpeak, const FString& ModelName)
 {
     FGenOAITextToSpeechSettings TTSSettings;
-    TTSSettings.Model = StringToOpenAITTSModel(ModelName);
-    if (TTSSettings.Model == EOpenAITTSModel::Custom)
-    {
-        TTSSettings.CustomModelName = ModelName;
-    }
+    TTSSettings.Model = ModelName;  // Set model directly as string
     TTSSettings.InputText = TextToSpeak;
     TTSSettings.Voice = EGenAIVoice::Alloy;
 
@@ -99,11 +85,7 @@ void AGXOpenAIAudioExample::RequestTranscriptionFromFile(const FString& AudioFil
     }
 
     FGenOAITranscriptionSettings TranscriptionSettings;
-    TranscriptionSettings.Model = StringToOpenAITranscriptionModel(ModelName);
-    if (TranscriptionSettings.Model == EOpenAITranscriptionModel::Custom)
-    {
-        TranscriptionSettings.CustomModelName = ModelName;
-    }
+    TranscriptionSettings.Model = ModelName;  // Set model directly as string
     TranscriptionSettings.Prompt = Prompt;
     TranscriptionSettings.Language = Language;
 
@@ -130,11 +112,7 @@ void AGXOpenAIAudioExample::RequestTranscriptionFromData(const TArray<uint8>& Au
     }
 
     FGenOAITranscriptionSettings TranscriptionSettings;
-    TranscriptionSettings.Model = StringToOpenAITranscriptionModel(ModelName);
-    if (TranscriptionSettings.Model == EOpenAITranscriptionModel::Custom)
-    {
-        TranscriptionSettings.CustomModelName = ModelName;
-    }
+    TranscriptionSettings.Model = ModelName;  // Set model directly as string
     TranscriptionSettings.Prompt = Prompt;
     TranscriptionSettings.Language = Language;
 

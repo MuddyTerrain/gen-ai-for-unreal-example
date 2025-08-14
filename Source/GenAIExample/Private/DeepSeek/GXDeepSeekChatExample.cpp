@@ -7,6 +7,7 @@
 #include "Data/DeepSeek/GenDeepSeekStructs.h"
 #include "Utilities/GenUtils.h"
 
+
 AGXDeepSeekChatExample::AGXDeepSeekChatExample()
 {
     PrimaryActorTick.bCanEverTick = false;
@@ -33,7 +34,7 @@ void AGXDeepSeekChatExample::RequestNonStreamingChat(const FString& UserMessage,
     ConversationHistory.Add(FGenChatMessage(TEXT("user"), {FGenAIMessageContent::FromText(UserMessage)}));
 
     FGenDSeekChatSettings ChatSettings;
-    ChatSettings.Model = UGenUtils::StringToModel<EDeepSeekModels>(ModelName, DeepSeekModelToString, EDeepSeekModels::Chat);
+    ChatSettings.Model = ModelName;  // Set model directly as string
     ChatSettings.Messages = ConversationHistory;
 
     ActiveRequestNonStreaming = UGenDSeekChat::SendChatRequest(
@@ -65,7 +66,7 @@ void AGXDeepSeekChatExample::RequestStreamingChat(const FString& UserMessage, co
     ConversationHistory.Add(FGenChatMessage(TEXT("user"), {FGenAIMessageContent::FromText(UserMessage)}));
 
     FGenDSeekChatSettings ChatSettings;
-    ChatSettings.Model = UGenUtils::StringToModel<EDeepSeekModels>(ModelName, DeepSeekModelToString, EDeepSeekModels::Chat);
+    ChatSettings.Model = ModelName;  // Set model directly as string
     ChatSettings.Messages = ConversationHistory;
 
     // This delegate is of type FOnDSeekChatStreamResponse, which we now correctly handle in OnStreamingChatEvent.

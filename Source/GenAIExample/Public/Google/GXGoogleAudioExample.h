@@ -86,9 +86,6 @@ public:
     FOnUITranscriptionResponse OnUITranscriptionResponse;
 
 private:
-    /** Helper function to convert string model names to enum types */
-    static EGoogleTTSModel StringToGoogleTTSModel(const FString& ModelName);
-    static EGoogleModels StringToGoogleModel(const FString& ModelName);
     static EGoogleAIVoice StringToGoogleVoice(const FString& VoiceName);
     
     /** The actual file processing logic, called after a delay to avoid race conditions. */

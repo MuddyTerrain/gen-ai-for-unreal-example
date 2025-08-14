@@ -5,9 +5,7 @@
 #include "CoreMinimal.h"
 #include "GenAIExampleDelegates.h"
 #include "GameFramework/Actor.h"
-#include "Data/OpenAI/GenOAIAudioStructs.h"
 #include "Http.h"
-#include "Sound/SoundSubmix.h"
 #include "GXOpenAIAudioExample.generated.h"
 
 UCLASS()
@@ -89,10 +87,6 @@ public:
     FOnUITranscriptionResponse OnUITranscriptionResponse;
 
 private:
-    /** Helper function to convert string model names to enum types */
-    static EOpenAITTSModel StringToOpenAITTSModel(const FString& ModelName);
-    static EOpenAITranscriptionModel StringToOpenAITranscriptionModel(const FString& ModelName);
-    
     /** The actual file processing logic, called after a delay to avoid race conditions. */
     void ProcessRecordedFile(FString BaseFileName);
 

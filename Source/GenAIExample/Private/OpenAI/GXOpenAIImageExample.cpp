@@ -27,7 +27,7 @@ void AGXOpenAIImageExample::RequestOpenAIImage(const FString& Prompt, const FStr
 
 	FGenOAIImageSettings Settings;
 	Settings.Prompt = Prompt;
-	Settings.Model = UGenUtils::StringToModel<EGenOAIImageModel>(ModelName, GenOAIImageModelToString, EGenOAIImageModel::DALL_E_3);
+	Settings.Model = ModelName;  // Set model directly as string
 	Settings.Size = EGenAIImageSize::Size1024x1024;
 	Settings.Quality = EGenAIImageQuality::Standard;
 	Settings.N = 1;

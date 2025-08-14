@@ -46,12 +46,8 @@ void AGXXAIChatExample::RequestNonStreamingChat(const FString& UserMessage, cons
 
 	// 3. Configure the chat settings
 	FGenXAIChatSettings ChatSettings;
-	// CORRECTED: Reverted to the original, well-tested default model.
-	ChatSettings.Model = UGenUtils::StringToModel<EXAIChatModel>(ModelName, XAIChatModelToString, EXAIChatModel::Grok_3_Mini);
-	if (ChatSettings.Model == EXAIChatModel::Custom)
-	{
-		ChatSettings.CustomModelName = ModelName;
-	}
+	// Set the model directly as string
+	ChatSettings.Model = ModelName;
 	ChatSettings.Messages = ConversationHistory;
 
 	// 4. Send the request using a lambda for the callback
@@ -96,12 +92,8 @@ void AGXXAIChatExample::RequestStreamingChat(const FString& UserMessage, const F
 
 	// 3. Configure settings
 	FGenXAIChatSettings ChatSettings;
-	// CORRECTED: Reverted to the original, well-tested default model.
-	ChatSettings.Model = UGenUtils::StringToModel<EXAIChatModel>(ModelName, XAIChatModelToString, EXAIChatModel::Grok_3_Mini);
-	if (ChatSettings.Model == EXAIChatModel::Custom)
-	{
-		ChatSettings.CustomModelName = ModelName;
-	}
+	// Set the model directly as string
+	ChatSettings.Model = ModelName;
 	ChatSettings.Messages = ConversationHistory;
 
 	// 4. Send the request, binding our handler function to the delegate
@@ -148,4 +140,10 @@ void AGXXAIChatExample::OnStreamingChatEvent(EXAIStreamEventType EventType, cons
 			 ActiveRequestStreaming.Reset();
 			 break;
 	}
+}
+
+// Simple helper to use model name directly as string
+static FString GetXAIModelFromString(const FString& ModelName)
+{
+    return ModelName;
 }

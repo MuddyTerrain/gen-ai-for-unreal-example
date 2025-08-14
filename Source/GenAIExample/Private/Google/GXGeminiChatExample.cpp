@@ -5,11 +5,6 @@
 #include "Models/Google/GenGeminiChatStream.h"
 #include "Utilities/GenUtils.h"
 
-// Helper to convert string to EGoogleModels enum
-static EGoogleModels StringToGoogleModel(const FString& ModelName)
-{
-    return UGenUtils::StringToModel<EGoogleModels>(ModelName, GoogleModelToString, EGoogleModels::Gemini_2_5_Flash);
-}
 
 AGXGeminiChatExample::AGXGeminiChatExample()
 {
@@ -35,7 +30,7 @@ void AGXGeminiChatExample::RequestNonStreamingChat(const FString& UserMessage, c
 
     // 2. Configure the chat settings
     FGenGeminiChatSettings ChatSettings;
-    ChatSettings.Model = StringToGoogleModel(ModelName);
+    ChatSettings.Model = ModelName;
     ChatSettings.Messages = ConversationHistory;
     ChatSettings.MaxOutputTokens = 2048;
     ChatSettings.Temperature = 0.7f;
@@ -71,7 +66,7 @@ void AGXGeminiChatExample::RequestStreamingChat(const FString& UserMessage, cons
 
     // 2. Configure settings
     FGenGeminiChatSettings ChatSettings;
-    ChatSettings.Model = StringToGoogleModel(ModelName);
+    ChatSettings.Model = ModelName;
     ChatSettings.Messages = ConversationHistory;
 
     // 3. Send the request

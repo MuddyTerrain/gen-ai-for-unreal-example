@@ -10,18 +10,6 @@
 #include "Misc/DateTime.h"
 #include "Sound/SoundWave.h"
 
-EGoogleTTSModel AGXGoogleAudioExample::StringToGoogleTTSModel(const FString& ModelName)
-{
-    if (ModelName == TEXT("gemini-2.5-flash-preview-tts")) return EGoogleTTSModel::Gemini_2_5_Flash_Preview_TTS;
-    if (ModelName == TEXT("gemini-2.5-pro-preview-tts")) return EGoogleTTSModel::Gemini_2_5_Pro_Preview_TTS;
-    return EGoogleTTSModel::Custom;
-}
-
-EGoogleModels AGXGoogleAudioExample::StringToGoogleModel(const FString& ModelName)
-{
-    return UGenUtils::StringToModel<EGoogleModels>(ModelName, GoogleModelToString, EGoogleModels::Custom);
-}
-
 EGoogleAIVoice AGXGoogleAudioExample::StringToGoogleVoice(const FString& VoiceName)
 {
     EGoogleAIVoice Voice = EGoogleAIVoice::Zephyr;
@@ -63,11 +51,9 @@ void AGXGoogleAudioExample::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void AGXGoogleAudioExample::RequestTextToSpeech(const FString& TextToSpeak, const FString& ModelName, const FString& VoiceName)
 {
     FGoogleTextToSpeechSettings TTSSettings;
-    TTSSettings.Model = StringToGoogleTTSModel(ModelName);
-    if (TTSSettings.Model == EGoogleTTSModel::Custom)
-    {
-        TTSSettings.CustomModelName = ModelName;
-    }
+    TTSSettings.Model = ModelName;
+    UE_LOG(LogTemp, Log, TEXT("Requesting TTS with Model: %s, Custom Model: %s"), *ModelName, *ModelName);
+    
     TTSSettings.InputText = TextToSpeak;
     TTSSettings.SpeechConfig.Voice = StringToGoogleVoice(VoiceName);
 
@@ -112,11 +98,10 @@ void AGXGoogleAudioExample::RequestTranscriptionFromFile(const FString& AudioFil
     }
 
     FGoogleTranscriptionSettings TranscriptionSettings;
-    TranscriptionSettings.Model = StringToGoogleModel(ModelName);
-    if (TranscriptionSettings.Model == EGoogleModels::Custom)
-    {
-        TranscriptionSettings.CustomModelName = ModelName;
-    }
+    TranscriptionSettings.Model =  ModelName;
+
+    UE_LOG(LogTemp, Log, TEXT("Requesting transcription with Model: %s, Custom Model: %s"), *ModelName, *ModelName);
+    
     TranscriptionSettings.Prompt = Prompt;
 
     TWeakObjectPtr<AGXGoogleAudioExample> WeakThis(this);
@@ -142,11 +127,7 @@ void AGXGoogleAudioExample::RequestTranscriptionFromData(const TArray<uint8>& Au
     }
 
     FGoogleTranscriptionSettings TranscriptionSettings;
-    TranscriptionSettings.Model = StringToGoogleModel(ModelName);
-    if (TranscriptionSettings.Model == EGoogleModels::Custom)
-    {
-        TranscriptionSettings.CustomModelName = ModelName;
-    }
+    TranscriptionSettings.Model = ModelName;
     TranscriptionSettings.Prompt = Prompt;
 
     TWeakObjectPtr<AGXGoogleAudioExample> WeakThis(this);

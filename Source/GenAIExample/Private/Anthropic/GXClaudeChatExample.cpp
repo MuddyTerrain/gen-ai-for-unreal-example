@@ -5,14 +5,6 @@
 #include "Utilities/GenUtils.h"
 #include "Misc/Paths.h"
 
-/**
- * @brief Converts a model name string to the corresponding EClaudeModels enum value.
- * If no match is found, defaults to Claude_Opus_4.
- */
-static EClaudeModels StringToClaudeModel(const FString& ModelName)
-{
-    return UGenUtils::StringToModel<EClaudeModels>(ModelName, ClaudeModelToString, EClaudeModels::Claude_Opus_4);
-}
 
 AGXClaudeChatExample::AGXClaudeChatExample()
 {
@@ -43,7 +35,7 @@ void AGXClaudeChatExample::RequestNonStreamingChat(const FString& UserMessage, c
 
     // 3. Configure chat settings
     FGenClaudeChatSettings ChatSettings;
-    ChatSettings.Model = StringToClaudeModel(ModelName);
+    ChatSettings.Model = ModelName;  // Set model directly as string
     ChatSettings.Messages = ConversationHistory;
     ChatSettings.MaxTokens = 1500;
     ChatSettings.bStreamResponse = false;

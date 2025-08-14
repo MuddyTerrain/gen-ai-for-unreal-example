@@ -8,22 +8,13 @@
 #include "UObject/UObjectGlobals.h"
 #include "UObject/EnumProperty.h"
 
-/**
- * @brief Converts a model name string to the corresponding EOpenAIChatModel enum value.
- *
- * This allows for flexible model selection from Blueprints or external configuration files.
- * It iterates through the known enum values and compares them against the input string.
- * If no match is found, it defaults to 'Custom', allowing the system to use the
- * input string as a custom model identifier.
- *
- * @param ModelName The model name to convert.
- * @return The corresponding EOpenAIChatModel enum value.
- */
-static EOpenAIChatModel StringToOpenAIChatModel(const FString& ModelName)
-{
-    return UGenUtils::StringToModel<EOpenAIChatModel>(ModelName, OpenAIChatModelToString, EOpenAIChatModel::Custom);
-}
 
+
+// Simple helper function to get model name from settings
+static FString GetModelFromSettings(const FGenOAIChatSettings& Settings)
+{
+	return Settings.Model;
+}
 
 AGXOpenAIChatExample::AGXOpenAIChatExample()
 {
@@ -55,13 +46,8 @@ void AGXOpenAIChatExample::RequestNonStreamingChat(const FString& UserMessage, c
     // 3. Configure the chat settings
     FGenOAIChatSettings ChatSettings;
     
-    // Set the model from the input string
-    ChatSettings.Model = StringToOpenAIChatModel(ModelName);
-    if (ChatSettings.Model == EOpenAIChatModel::Custom)
-    {
-        ChatSettings.CustomModelName = ModelName;
-    }
-
+    // Set the model directly as string
+    ChatSettings.Model = ModelName;
     ChatSettings.Messages = ConversationHistory;
     ChatSettings.MaxTokens = 1500;
     ChatSettings.bStream = false;
@@ -73,7 +59,7 @@ void AGXOpenAIChatExample::RequestNonStreamingChat(const FString& UserMessage, c
             [this](const FString& Response, const FString& ErrorMessage, bool bSuccess)
             {
                 if (!UGenUtils::IsContextStillValid(this)) return;
-
+                
                 if (bSuccess)
                 {
                     // Add AI's response to history and broadcast to UI
@@ -110,13 +96,8 @@ void AGXOpenAIChatExample::RequestStreamingChat(const FString& UserMessage, cons
     // 3. Configure settings
     FGenOAIChatSettings ChatSettings;
     
-    // Set the model from the input string
-    ChatSettings.Model = StringToOpenAIChatModel(ModelName);
-    if (ChatSettings.Model == EOpenAIChatModel::Custom)
-    {
-        ChatSettings.CustomModelName = ModelName;
-    }
-
+    // Set the model directly as string
+    ChatSettings.Model = ModelName;
     ChatSettings.Messages = ConversationHistory;
     ChatSettings.bStream = true; // Implicitly handled, but good for clarity
 
