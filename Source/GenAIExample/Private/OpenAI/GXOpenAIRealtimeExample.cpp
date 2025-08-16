@@ -30,7 +30,6 @@ void AGXOpenAIRealtimeExample::BeginPlay()
         RealtimeService->OnConnectedBP.AddDynamic(this, &AGXOpenAIRealtimeExample::HandleRealtimeConnected);
         RealtimeService->OnConnectionErrorBP.AddDynamic(this, &AGXOpenAIRealtimeExample::HandleRealtimeConnectionError);
         RealtimeService->OnDisconnectedBP.AddDynamic(this, &AGXOpenAIRealtimeExample::HandleRealtimeDisconnected);
-        RealtimeService->OnTextResponseBP.AddDynamic(this, &AGXOpenAIRealtimeExample::HandleRealtimeTextResponse);
         RealtimeService->OnAudioResponseBP.AddDynamic(this, &AGXOpenAIRealtimeExample::HandleRealtimeAudioResponse);
         RealtimeService->OnAudioTranscriptDeltaBP.AddDynamic(this, &AGXOpenAIRealtimeExample::HandleRealtimeTranscriptDelta);
     }
@@ -117,19 +116,14 @@ void AGXOpenAIRealtimeExample::HandleRealtimeDisconnected()
     SetState(ERealtimeConversationState::Idle);
 }
 
-void AGXOpenAIRealtimeExample::HandleRealtimeTextResponse(const FString& Text)
+void AGXOpenAIRealtimeExample::HandleRealtimeAudioResponse(const TArray<uint8>& AudioData)
 {
     if (CurrentState == ERealtimeConversationState::WaitingForAI)
     {
+        // First audio chunk received, transition to speaking state.
         SetState(ERealtimeConversationState::SpeakingAI);
-        FullAIResponse.Empty();
     }
-    FullAIResponse += Text;
-    OnAIResponseUpdated.Broadcast(FullAIResponse);
-}
-
-void AGXOpenAIRealtimeExample::HandleRealtimeAudioResponse(const TArray<uint8>& AudioData)
-{
+    
     if (AIResponseWave)
     {
         AIResponseWave->QueueAudio(AudioData.GetData(), AudioData.Num());

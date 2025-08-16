@@ -8,6 +8,8 @@
 #include "Http.h"
 #include "GXOpenAIAudioExample.generated.h"
 
+class UAudioCaptureComponent;
+
 UCLASS()
 class GENAIEXAMPLE_API AGXOpenAIAudioExample : public AActor
 {
@@ -20,6 +22,14 @@ protected:
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
+    //~=============================================================================
+    //~ Components
+    //~=============================================================================
+
+    /** Component to capture audio from the microphone */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+    UAudioCaptureComponent* AudioCapture;
+    
     //~=============================================================================
     //~ TTS and Transcription Requests
     //~=============================================================================

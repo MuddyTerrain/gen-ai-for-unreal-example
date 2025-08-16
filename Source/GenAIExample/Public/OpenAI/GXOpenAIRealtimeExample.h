@@ -16,22 +16,21 @@ class USoundWaveProcedural;
 UENUM(BlueprintType)
 enum class ERealtimeConversationState : uint8
 {
-    Idle			UMETA(DisplayName = "Idle"),
-    Connecting		UMETA(DisplayName = "Connecting..."),
+    Idle          UMETA(DisplayName = "Idle"),
+    Connecting     UMETA(DisplayName = "Connecting..."),
     Connected_Ready UMETA(DisplayName = "Ready (Listening for Speech)"),
-    UserIsSpeaking	UMETA(DisplayName = "User Speaking"),
-    WaitingForAI	UMETA(DisplayName = "Waiting for AI"),
-    SpeakingAI		UMETA(DisplayName = "AI Speaking")
+    UserIsSpeaking  UMETA(DisplayName = "User Speaking"),
+    WaitingForAI    UMETA(DisplayName = "Waiting for AI"),
+    SpeakingAI     UMETA(DisplayName = "AI Speaking")
 };
 
 // UI Delegates
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnRealtimeStateChanged, ERealtimeConversationState, NewState);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUserTranscriptUpdated, const FString&, Transcript);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAIResponseUpdated, const FString&, AIResponse);
 
 /**
  * An example actor demonstrating a full, hands-free voice conversation with Voice Activity Detection (VAD)
- * using the OpenAI Realtime API service.
+ * using the OpenAI Realtime API service. This example is audio-only.
  */
 UCLASS()
 class GENAIEXAMPLE_API AGXOpenAIRealtimeExample : public AActor
@@ -77,9 +76,6 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "GenAI|OpenAI|Realtime Example")
     FOnUserTranscriptUpdated OnUserTranscriptUpdated;
 
-    UPROPERTY(BlueprintAssignable, Category = "GenAI|OpenAI|Realtime Example")
-    FOnAIResponseUpdated OnAIResponseUpdated;
-
 private:
     //~=============================================================================
     //~ Internal Handlers & Logic
@@ -88,7 +84,6 @@ private:
     UFUNCTION() void HandleRealtimeConnected(const FString& SessionId);
     UFUNCTION() void HandleRealtimeConnectionError(int32 StatusCode, const FString& Reason, bool bWasClean);
     UFUNCTION() void HandleRealtimeDisconnected();
-    UFUNCTION() void HandleRealtimeTextResponse(const FString& Text);
     UFUNCTION() void HandleRealtimeAudioResponse(const TArray<uint8>& AudioData);
     UFUNCTION() void HandleRealtimeTranscriptDelta(const FString& TranscriptDelta);
 
@@ -112,6 +107,5 @@ private:
     UPROPERTY() ERealtimeConversationState CurrentState;
     FTimerHandle SilenceTimer;
     FString FullUserTranscript;
-    FString FullAIResponse;
     FString CachedSystemPrompt;
 };

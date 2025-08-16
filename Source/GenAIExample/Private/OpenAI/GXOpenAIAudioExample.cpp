@@ -1,6 +1,8 @@
 // Copyright 2025, Muddy Terrain Games, All Rights Reserved.
 
 #include "OpenAI/GXOpenAIAudioExample.h"
+
+#include "AudioCaptureComponent.h"
 #include "Models/OpenAI/GenOAITextToSpeech.h"
 #include "Models/OpenAI/GenOAITranscription.h"
 #include "Misc/Paths.h"
@@ -8,13 +10,25 @@
 #include "AudioMixerBlueprintLibrary.h"
 #include "Utilities/GenAIAudioUtils.h"
 #include "Data/OpenAI/GenOAIAudioStructs.h"
-#include "Misc/DateTime.h"
-#include "Utilities/GenUtils.h"
+#include "Components/SceneComponent.h"
 
 
 AGXOpenAIAudioExample::AGXOpenAIAudioExample()
 {
     PrimaryActorTick.bCanEverTick = false;
+
+    // Create a root component
+    RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
+
+    // Create and attach the audio capture component
+    AudioCapture = CreateDefaultSubobject<UAudioCaptureComponent>(TEXT("AudioCaptureComponent"));
+    if (AudioCapture)
+    {
+        AudioCapture->SetupAttachment(RootComponent);
+        AudioCapture->SoundSubmix = RecordingSubmix;
+
+    }
+    
     RecordingSubmix = nullptr;
 }
 
@@ -137,13 +151,26 @@ void AGXOpenAIAudioExample::StartRecording(const FString& ModelName, const FStri
         UE_LOG(LogTemp, Warning, TEXT("StartRecording: No RecordingSubmix specified. Please assign it in the editor."));
         return;
     }
+    
+    if (!AudioCapture)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("StartRecording: AudioCapture component is not valid."));
+        return;
+    }
 
     TranscriptionModelName = ModelName;
     TranscriptionPrompt = Prompt;
     TranscriptionLanguage = Language;
+    
+    AudioCapture->SoundSubmix = RecordingSubmix;
+    // Route the audio capture to the recording submix
+    AudioCapture->SetSubmixSend(RecordingSubmix, 1.0f);
+
+    // Start capturing audio from the microphone
+    AudioCapture->Start();
 
     UAudioMixerBlueprintLibrary::StartRecordingOutput(this, 0.f, RecordingSubmix);
-    UE_LOG(LogTemp, Log, TEXT("Started recording submix '%s'"), *RecordingSubmix->GetName());
+    UE_LOG(LogTemp, Log, TEXT("Started recording submix '%s' and audio capture."), *RecordingSubmix->GetName());
 }
 
 void AGXOpenAIAudioExample::StopRecordingAndTranscribe()
@@ -155,7 +182,17 @@ void AGXOpenAIAudioExample::StopRecordingAndTranscribe()
         return;
     }
 
-    const FString BaseFileName = FString::Printf(TEXT("mic_recording_%s"), *FDateTime::Now().ToString());
+    if (!AudioCapture)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("StopRecordingAndTranscribe: AudioCapture component is not valid."));
+        return;
+    }
+    
+    // Stop capturing audio from the microphone first
+    AudioCapture->Stop();
+
+    // Use a fixed file name to overwrite the previous recording
+    const FString BaseFileName = TEXT("mic_recording_overwrite");
     const FString SaveDirectory = FPaths::ProjectSavedDir() + TEXT("BouncedWavFiles/");
 
     UAudioMixerBlueprintLibrary::StopRecordingOutput(this, EAudioRecordingExportType::WavFile, BaseFileName, SaveDirectory, RecordingSubmix);
@@ -173,7 +210,7 @@ void AGXOpenAIAudioExample::ProcessRecordedFile(FString BaseFileName)
 {
     UE_LOG(LogTemp, Log, TEXT("Timer finished. Processing file: %s.wav"), *BaseFileName);
 
-    const FString FileNameWithExtension = BaseFileName + TEXT(".wav");
+    const FString FileNameWithExtension = FPaths::ProjectSavedDir() + TEXT("BouncedWavFiles/") + BaseFileName + TEXT(".wav");
     
     TArray<uint8> RawPCMData = UGenAIAudioUtils::GetPCMDataFromWavFile(FileNameWithExtension);
 
