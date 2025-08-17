@@ -62,6 +62,17 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GenAI|VAD Settings")
     float SilenceTimeout = 1.0f;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GenAI|VAD Settings", meta=(ToolTip="If true, use local RMS threshold; if false rely entirely on server VAD and stream continuously."))
+    bool bUseLocalRMSGate = false;
+
+    // Server-side VAD configuration (applied after connect via ConfigureServerVAD)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GenAI|VAD Settings") bool bEnableServerVAD = true;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GenAI|VAD Settings") float ServerVADThreshold = 0.5f;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GenAI|VAD Settings") int32 ServerVADSilenceMs = 400;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GenAI|VAD Settings") int32 ServerVADPrefixPaddingMs = 300;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GenAI|VAD Settings") bool bServerVADCreateResponse = true;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GenAI|VAD Settings") bool bServerVADInterruptResponse = true;
+
     //~=============================================================================
     //~ Conversation Control
     //~=============================================================================
@@ -79,6 +90,17 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "GenAI|OpenAI|Realtime Example")
     FOnUserTranscriptUpdated OnUserTranscriptUpdated;
 
+    // Additional realtime session settings
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GenAI|Realtime Settings") FString Voice = TEXT("alloy");
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GenAI|Realtime Settings") float Temperature = 0.8f;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GenAI|Realtime Settings") FString OutputAudioFormat = TEXT("pcm16");
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GenAI|Realtime Settings", meta=(ToolTip="If set, server will transcribe user input audio with this model (e.g. gpt-4o-mini-transcribe).")) FString InputTranscriptionModel;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GenAI|Realtime Settings", meta=(ToolTip="If false, assistant audio won't be played (transcripts still processed).")) bool bStreamAssistantAudio = true;
+
+    // Assistant transcript delegate
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAssistantTranscriptUpdated, const FString&, Transcript);
+    UPROPERTY(BlueprintAssignable, Category="GenAI|OpenAI|Realtime Example") FOnAssistantTranscriptUpdated OnAssistantTranscriptUpdated;
+
 private:
     //~=============================================================================
     //~ Internal Handlers & Logic
@@ -88,7 +110,12 @@ private:
     UFUNCTION() void HandleRealtimeConnectionError(int32 StatusCode, const FString& Reason, bool bWasClean);
     UFUNCTION() void HandleRealtimeDisconnected();
     UFUNCTION() void HandleRealtimeAudioResponse(const TArray<uint8>& AudioData);
-    UFUNCTION() void HandleRealtimeTranscriptDelta(const FString& TranscriptDelta);
+    UFUNCTION() void HandleRealtimeTranscriptDelta(const FString& TranscriptDelta); // legacy assistant delta
+    UFUNCTION() void HandleUserTranscriptDelta(const FString& TranscriptDelta);
+    UFUNCTION() void HandleAssistantTranscriptDelta(const FString& TranscriptDelta);
+    UFUNCTION() void HandleServerSpeechStarted(const FString& ItemId);
+    UFUNCTION() void HandleServerSpeechStopped(const FString& ItemId);
+    UFUNCTION() void HandleServerAudioDone(const FString& ResponseId);
 
     void HandleAudioGenerated(const float* InAudio, int32 NumSamples);
     void OnSilenceDetected();
@@ -112,16 +139,19 @@ private:
     FTimerHandle SilenceTimer;
     FString FullUserTranscript;
     FString CachedSystemPrompt;
+    FString AssistantTranscript;
     
     /** A buffer to hold all the audio chunks for a single user utterance, used for saving to a file. */
     TArray<uint8> AccumulatedAudioBuffer;
 
-    /** Thread-safe queue to hold transcript deltas received from the network thread. */
-    TQueue<FString, EQueueMode::Mpsc> PendingTranscriptDeltas;
 
     /** Thread-safe queue to hold raw audio chunks from the audio thread. */
     TQueue<TArray<float>, EQueueMode::Mpsc> PendingAudioChunks;
 
     /** Atomic float to safely store the latest mic volume from the audio thread for display only. */
     std::atomic<float> DisplayMicRms;
+
+    TQueue<FString, EQueueMode::Mpsc> PendingAssistantTranscriptDeltas;
+    TQueue<FString, EQueueMode::Mpsc> PendingUserTranscriptDeltas;
+    bool bExtendedLogging = false;
 };
