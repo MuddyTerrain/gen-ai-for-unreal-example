@@ -5,12 +5,15 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Components/AudioComponent.h"
+#include "Containers/Queue.h"
+#include <atomic>
 #include "GXOpenAIRealtimeExample.generated.h"
 
 // Forward declarations
 class UGenOAIRealtime;
 class URealtimeAudioCaptureComponent;
 class USoundWaveProcedural;
+class USoundSubmix;
 
 /** Defines the current state of the real-time voice conversation. */
 UENUM(BlueprintType)
@@ -28,10 +31,6 @@ enum class ERealtimeConversationState : uint8
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnRealtimeStateChanged, ERealtimeConversationState, NewState);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUserTranscriptUpdated, const FString&, Transcript);
 
-/**
- * An example actor demonstrating a full, hands-free voice conversation with Voice Activity Detection (VAD)
- * using the OpenAI Realtime API service. This example is audio-only.
- */
 UCLASS()
 class GENAIEXAMPLE_API AGXOpenAIRealtimeExample : public AActor
 {
@@ -47,14 +46,19 @@ protected:
 
 public:
     //~=============================================================================
+    //~ Audio Settings (Editable in Blueprint)
+    //~=============================================================================
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GenAI|Audio Settings")
+    USoundSubmix* RecordingSubmix;
+    
+    //~=============================================================================
     //~ VAD Settings (Editable in Blueprint)
     //~=============================================================================
 
-    /** The volume threshold to trigger speech detection. Increase if background noise is an issue. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GenAI|VAD Settings")
     float VoiceActivationThreshold = 0.02f;
 
-    /** How long the user must be silent (in seconds) before their speech is sent to the AI. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GenAI|VAD Settings")
     float SilenceTimeout = 1.0f;
 
@@ -62,7 +66,6 @@ public:
     //~ Conversation Control
     //~=============================================================================
 
-    /** Starts or stops the voice conversation. */
     UFUNCTION(BlueprintCallable, Category = "GenAI|OpenAI|Realtime Example")
     void ToggleConversation(bool bShouldStart, const FString& Model = TEXT("gpt-4o"), const FString& SystemPrompt = TEXT("You are a helpful and friendly voice assistant."));
 
@@ -96,16 +99,29 @@ private:
     //~=============================================================================
 
     UPROPERTY() TObjectPtr<UGenOAIRealtime> RealtimeService;
-    UPROPERTY() TObjectPtr<URealtimeAudioCaptureComponent> AudioCapture;
+    UPROPERTY(VisibleAnywhere) 
+    TObjectPtr<URealtimeAudioCaptureComponent> AudioCapture;
     UPROPERTY() TObjectPtr<UAudioComponent> AIAudioPlayer;
     UPROPERTY() TObjectPtr<USoundWaveProcedural> AIResponseWave;
 
     //~=============================================================================
-    //~ Internal State
+    //~ Internal State & Threading
     //~=============================================================================
 
     UPROPERTY() ERealtimeConversationState CurrentState;
     FTimerHandle SilenceTimer;
     FString FullUserTranscript;
     FString CachedSystemPrompt;
+    
+    /** A buffer to hold all the audio chunks for a single user utterance, used for saving to a file. */
+    TArray<uint8> AccumulatedAudioBuffer;
+
+    /** Thread-safe queue to hold transcript deltas received from the network thread. */
+    TQueue<FString, EQueueMode::Mpsc> PendingTranscriptDeltas;
+
+    /** Thread-safe queue to hold raw audio chunks from the audio thread. */
+    TQueue<TArray<float>, EQueueMode::Mpsc> PendingAudioChunks;
+
+    /** Atomic float to safely store the latest mic volume from the audio thread for display only. */
+    std::atomic<float> DisplayMicRms;
 };
