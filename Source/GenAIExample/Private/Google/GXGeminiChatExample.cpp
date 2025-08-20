@@ -29,7 +29,7 @@ void AGXGeminiChatExample::RequestNonStreamingChat(const FString& UserMessage, c
     ConversationHistory.Add(FGenGeminiMessage(TEXT("user"), UserMessage));
 
     // 2. Configure the chat settings
-    FGenGeminiChatSettings ChatSettings;
+    FGenGoogleChatSettings ChatSettings;
     ChatSettings.Model = ModelName;
     ChatSettings.Messages = ConversationHistory;
     ChatSettings.MaxOutputTokens = 2048;
@@ -65,7 +65,7 @@ void AGXGeminiChatExample::RequestStreamingChat(const FString& UserMessage, cons
     AccumulatedStreamedResponse.Empty();
 
     // 2. Configure settings
-    FGenGeminiChatSettings ChatSettings;
+    FGenGoogleChatSettings ChatSettings;
     ChatSettings.Model = ModelName;
     ChatSettings.Messages = ConversationHistory;
 

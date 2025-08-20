@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Components/AudioComponent.h"
-#include "AGXOpenAIRealtimePushToTalk.generated.h"
+#include "GXOpenAIRealtimePushToTalk.generated.h"
 
 class UGenOAIRealtime;
 class URealtimeAudioCaptureComponent;

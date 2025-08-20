@@ -33,7 +33,7 @@ void AGXDeepSeekChatExample::RequestNonStreamingChat(const FString& UserMessage,
 
     ConversationHistory.Add(FGenChatMessage(TEXT("user"), {FGenAIMessageContent::FromText(UserMessage)}));
 
-    FGenDSeekChatSettings ChatSettings;
+    FGenDeepSeekChatSettings ChatSettings;
     ChatSettings.Model = ModelName;  // Set model directly as string
     ChatSettings.Messages = ConversationHistory;
 
@@ -65,7 +65,7 @@ void AGXDeepSeekChatExample::RequestStreamingChat(const FString& UserMessage, co
 
     ConversationHistory.Add(FGenChatMessage(TEXT("user"), {FGenAIMessageContent::FromText(UserMessage)}));
 
-    FGenDSeekChatSettings ChatSettings;
+    FGenDeepSeekChatSettings ChatSettings;
     ChatSettings.Model = ModelName;  // Set model directly as string
     ChatSettings.Messages = ConversationHistory;
 

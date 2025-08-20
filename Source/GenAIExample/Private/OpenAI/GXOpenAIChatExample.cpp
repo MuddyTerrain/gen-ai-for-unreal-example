@@ -11,7 +11,7 @@
 
 
 // Simple helper function to get model name from settings
-static FString GetModelFromSettings(const FGenOAIChatSettings& Settings)
+static FString GetModelFromSettings(const FGenOpenAIChatSettings& Settings)
 {
 	return Settings.Model;
 }
@@ -44,7 +44,7 @@ void AGXOpenAIChatExample::RequestNonStreamingChat(const FString& UserMessage, c
     ConversationHistory.Add(FGenChatMessage(TEXT("user"), MessageContent));
 
     // 3. Configure the chat settings
-    FGenOAIChatSettings ChatSettings;
+    FGenOpenAIChatSettings ChatSettings;
     
     // Set the model directly as string
     ChatSettings.Model = ModelName;
@@ -94,7 +94,7 @@ void AGXOpenAIChatExample::RequestStreamingChat(const FString& UserMessage, cons
     ConversationHistory.Add(FGenChatMessage(TEXT("user"), MessageContent));
 
     // 3. Configure settings
-    FGenOAIChatSettings ChatSettings;
+    FGenOpenAIChatSettings ChatSettings;
     
     // Set the model directly as string
     ChatSettings.Model = ModelName;
