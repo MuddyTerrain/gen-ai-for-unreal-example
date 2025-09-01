@@ -29,8 +29,20 @@ void AGXOpenAIChatExample::ClearConversation()
     ConversationHistory.Add(FGenChatMessage(TEXT("system"), TEXT("You are a helpful assistant integrated into an Unreal Engine application.")));
 }
 
-void AGXOpenAIChatExample::RequestNonStreamingChat(const FString& UserMessage, const FString& ModelName, UTexture2D* Image)
+void AGXOpenAIChatExample::RequestNonStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& SystemPrompt, UTexture2D* Image)
 {
+    if (!SystemPrompt.IsEmpty())
+    {
+        if (ConversationHistory.Num() > 0 && ConversationHistory[0].Role == TEXT("system"))
+        {
+            ConversationHistory[0] = FGenChatMessage(TEXT("system"), SystemPrompt);
+        }
+        else
+        {
+            ConversationHistory.Insert(FGenChatMessage(TEXT("system"), SystemPrompt), 0);
+        }
+    }
+
     // 1. Construct the message content (text and optional image)
     TArray<FGenAIMessageContent> MessageContent;
     MessageContent.Add(FGenAIMessageContent::FromText(UserMessage));
@@ -79,8 +91,20 @@ void AGXOpenAIChatExample::RequestNonStreamingChat(const FString& UserMessage, c
     );
 }
 
-void AGXOpenAIChatExample::RequestStreamingChat(const FString& UserMessage, const FString& ModelName, UTexture2D* Image)
+void AGXOpenAIChatExample::RequestStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& SystemPrompt, UTexture2D* Image)
 {
+    if (!SystemPrompt.IsEmpty())
+    {
+        if (ConversationHistory.Num() > 0 && ConversationHistory[0].Role == TEXT("system"))
+        {
+            ConversationHistory[0] = FGenChatMessage(TEXT("system"), SystemPrompt);
+        }
+        else
+        {
+            ConversationHistory.Insert(FGenChatMessage(TEXT("system"), SystemPrompt), 0);
+        }
+    }
+
     // 1. Construct the message content
     TArray<FGenAIMessageContent> MessageContent;
     MessageContent.Add(FGenAIMessageContent::FromText(UserMessage));

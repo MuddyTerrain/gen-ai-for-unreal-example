@@ -19,8 +19,20 @@ void AGXClaudeChatExample::ClearConversation()
     ConversationHistory.Add(FGenClaudeChatMessage(TEXT("system"), TEXT("You are Claude, a helpful AI assistant integrated into an Unreal Engine application.")));
 }
 
-void AGXClaudeChatExample::RequestNonStreamingChat(const FString& UserMessage, const FString& ModelName, UTexture2D* Image)
+void AGXClaudeChatExample::RequestNonStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& SystemPrompt, UTexture2D* Image)
 {
+    if (!SystemPrompt.IsEmpty())
+    {
+        if (ConversationHistory.Num() > 0 && ConversationHistory[0].Role == TEXT("system"))
+        {
+            ConversationHistory[0] = FGenClaudeChatMessage(TEXT("system"), SystemPrompt);
+        }
+        else
+        {
+            ConversationHistory.Insert(FGenClaudeChatMessage(TEXT("system"), SystemPrompt), 0);
+        }
+    }
+    
     // 1. Construct the message content (text and optional image)
     TArray<FGenAIMessageContent> MessageContent;
     MessageContent.Add(FGenAIMessageContent::FromText(UserMessage));

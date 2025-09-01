@@ -28,7 +28,7 @@ public:
      * @param Image (Optional) A UTexture2D asset for multimodal chat.
      */
     UFUNCTION(BlueprintCallable, Category = "GenAI|Claude Examples")
-    void RequestNonStreamingChat(const FString& UserMessage, const FString& ModelName, UTexture2D* Image = nullptr);
+    void RequestNonStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& SystemPrompt = TEXT(""), UTexture2D* Image = nullptr);
 
 
     /** Clears the chat history. */

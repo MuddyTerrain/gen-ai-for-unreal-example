@@ -28,7 +28,7 @@ public:
 	 * @param Schema The JSON schema defining the desired output structure.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "GenAI|OpenAI Examples")
-	void RequestStructuredOperation(const FString& UserMessage, const FString& ModelName, const FString& Schema);
+	void RequestStructuredOperation(const FString& UserMessage, const FString& ModelName, const FString& Schema, const FString& SystemPrompt = TEXT(""));
 
 	/** Delegate for Blueprints to receive the result of the structured operation. */
 	UPROPERTY(BlueprintAssignable, Category = "GenAI | Events")

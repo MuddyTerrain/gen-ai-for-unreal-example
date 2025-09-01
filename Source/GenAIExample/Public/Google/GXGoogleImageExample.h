@@ -28,6 +28,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "GenAI|Google Examples")
 	void RequestGoogleImage(const FString& Prompt, const FString& ModelName);
 
+	/**
+	 * @brief Requests an image edit from Google's Gemini models.
+	 * @param Prompt A description of the desired edit.
+	 * @param Image The image to edit.
+	 * @param ModelName The name of the model to use (e.g., "gemini-2.5-flash-image-preview").
+	 */
+	UFUNCTION(BlueprintCallable, Category = "GenAI|Google Examples")
+	void RequestGoogleImageEdit(const FString& Prompt, UTexture2D* Image, const FString& ModelName);
+
 	UPROPERTY(BlueprintAssignable, Category = "GenAI | Events")
 	FOnImageGenerated OnImageGenerated;
 

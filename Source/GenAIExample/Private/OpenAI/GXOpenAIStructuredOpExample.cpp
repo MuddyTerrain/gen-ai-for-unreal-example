@@ -19,7 +19,7 @@ void AGXOpenAIStructuredOpExample::EndPlay(const EEndPlayReason::Type EndPlayRea
     Super::EndPlay(EndPlayReason);
 }
 
-void AGXOpenAIStructuredOpExample::RequestStructuredOperation(const FString& UserMessage, const FString& ModelName, const FString& Schema)
+void AGXOpenAIStructuredOpExample::RequestStructuredOperation(const FString& UserMessage, const FString& ModelName, const FString& Schema, const FString& SystemPrompt)
 {
     // If there's an ongoing request, cancel it before starting a new one.
     if (ActiveStructuredOpRequest.IsValid())
@@ -31,6 +31,11 @@ void AGXOpenAIStructuredOpExample::RequestStructuredOperation(const FString& Use
     FGenOAIStructuredChatSettings StructuredChatSettings;
     StructuredChatSettings.ChatSettings.Model = ModelName;
     StructuredChatSettings.SchemaJson = Schema;
+
+    if (!SystemPrompt.IsEmpty())
+    {
+        StructuredChatSettings.ChatSettings.Messages.Add(FGenChatMessage(TEXT("system"), SystemPrompt));
+    }
 
     // **CORRECTED PART**
     // Correctly construct the FGenChatMessage using the provided constructor,

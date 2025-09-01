@@ -32,7 +32,7 @@ public:
      * @param Image (Optional) A UTexture2D asset for multimodal chat.
      */
     UFUNCTION(BlueprintCallable, Category = "GenAI|OpenAI Examples")
-    void RequestNonStreamingChat(const FString& UserMessage, const FString& ModelName, UTexture2D* Image = nullptr);
+    void RequestNonStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& SystemPrompt = TEXT(""), UTexture2D* Image = nullptr);
 
     /**
      * @brief Sends a user message for a streaming response.
@@ -41,7 +41,7 @@ public:
      * @param Image (Optional) A UTexture2D asset for multimodal chat.
      */
     UFUNCTION(BlueprintCallable, Category = "GenAI|OpenAI Examples")
-    void RequestStreamingChat(const FString& UserMessage, const FString& ModelName, UTexture2D* Image = nullptr);
+    void RequestStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& SystemPrompt = TEXT(""), UTexture2D* Image = nullptr);
     
     /** Clears the chat history. */
     UFUNCTION(BlueprintCallable, Category = "GenAI | UI Example")

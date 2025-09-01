@@ -28,9 +28,21 @@ void AGXXAIChatExample::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
-void AGXXAIChatExample::RequestNonStreamingChat(const FString& UserMessage, const FString& ModelName, UTexture2D* Image)
+void AGXXAIChatExample::RequestNonStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& SystemPrompt, UTexture2D* Image)
 {
 	if (ActiveRequestNonStreaming.IsValid()) return;
+
+    if (!SystemPrompt.IsEmpty())
+    {
+        if (ConversationHistory.Num() > 0 && ConversationHistory[0].Role == TEXT("system"))
+        {
+            ConversationHistory[0] = FGenXAIMessage(TEXT("system"), {FGenAIMessageContent::FromText(SystemPrompt)});
+        }
+        else
+        {
+            ConversationHistory.Insert(FGenXAIMessage(TEXT("system"), {FGenAIMessageContent::FromText(SystemPrompt)}), 0);
+        }
+    }
 
 	// 1. Construct the multimodal message content
 	TArray<FGenAIMessageContent> MessageContent;
@@ -75,9 +87,21 @@ void AGXXAIChatExample::RequestNonStreamingChat(const FString& UserMessage, cons
 	);
 }
 
-void AGXXAIChatExample::RequestStreamingChat(const FString& UserMessage, const FString& ModelName, UTexture2D* Image)
+void AGXXAIChatExample::RequestStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& SystemPrompt, UTexture2D* Image)
 {
 	if (ActiveRequestStreaming.IsValid()) return;
+
+    if (!SystemPrompt.IsEmpty())
+    {
+        if (ConversationHistory.Num() > 0 && ConversationHistory[0].Role == TEXT("system"))
+        {
+            ConversationHistory[0] = FGenXAIMessage(TEXT("system"), {FGenAIMessageContent::FromText(SystemPrompt)});
+        }
+        else
+        {
+            ConversationHistory.Insert(FGenXAIMessage(TEXT("system"), {FGenAIMessageContent::FromText(SystemPrompt)}), 0);
+        }
+    }
 
 	// 1. Construct the multimodal message content
 	TArray<FGenAIMessageContent> MessageContent;
