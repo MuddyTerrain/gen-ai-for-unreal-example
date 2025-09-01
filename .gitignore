@@ -118,4 +118,6 @@ Build/Android/res/*/*
 Plugins/**/Binaries/*
 Plugins/**/Intermediate/*
 
-# End of https://www.toptal.com/developers/gitignore/api/unrealenginefeed.txt 
+
+feed.txt
+
