@@ -28,7 +28,7 @@ public:
      * @param ModelName The name of the Google Gemini model to use.
      */
     UFUNCTION(BlueprintCallable, Category = "GenAI|Google Examples")
-    void RequestNonStreamingChat(const FString& UserMessage, const FString& ModelName);
+    void RequestNonStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& SystemPrompt = TEXT(""));
 
     /**
      * @brief Sends a user message for a streaming response from Gemini.
@@ -36,7 +36,7 @@ public:
      * @param ModelName The name of the Google Gemini model to use.
      */
     UFUNCTION(BlueprintCallable, Category = "GenAI|Google Examples")
-    void RequestStreamingChat(const FString& UserMessage, const FString& ModelName);
+    void RequestStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& SystemPrompt = TEXT(""));
 
     /** Clears the chat history. */
     UFUNCTION(BlueprintCallable, Category = "GenAI | UI Example")

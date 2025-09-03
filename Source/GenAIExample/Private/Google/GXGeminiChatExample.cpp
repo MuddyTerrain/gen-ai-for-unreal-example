@@ -23,13 +23,26 @@ void AGXGeminiChatExample::ClearConversation()
     AccumulatedStreamedResponse.Empty();
 }
 
-void AGXGeminiChatExample::RequestNonStreamingChat(const FString& UserMessage, const FString& ModelName)
+void AGXGeminiChatExample::RequestNonStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& SystemPrompt)
 {
+    if (!SystemPrompt.IsEmpty())
+    {
+        if (ConversationHistory.Num() > 0)
+        {
+            ConversationHistory[0] = FGenGeminiMessage(TEXT("user"), SystemPrompt);
+        }
+        else
+        {
+            ConversationHistory.Add(FGenGeminiMessage(TEXT("user"), SystemPrompt));
+            ConversationHistory.Add(FGenGeminiMessage(TEXT("model"), FString(TEXT("Okay, I will be a helpful and concise assistant."))));
+        }
+    }
+
     // 1. Add the user message to our history
     ConversationHistory.Add(FGenGeminiMessage(TEXT("user"), UserMessage));
 
     // 2. Configure the chat settings
-    FGenGeminiChatSettings ChatSettings;
+    FGenGoogleChatSettings ChatSettings;
     ChatSettings.Model = ModelName;
     ChatSettings.Messages = ConversationHistory;
     ChatSettings.MaxOutputTokens = 2048;
@@ -58,14 +71,27 @@ void AGXGeminiChatExample::RequestNonStreamingChat(const FString& UserMessage, c
     );
 }
 
-void AGXGeminiChatExample::RequestStreamingChat(const FString& UserMessage, const FString& ModelName)
+void AGXGeminiChatExample::RequestStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& SystemPrompt)
 {
+    if (!SystemPrompt.IsEmpty())
+    {
+        if (ConversationHistory.Num() > 0)
+        {
+            ConversationHistory[0] = FGenGeminiMessage(TEXT("user"), SystemPrompt);
+        }
+        else
+        {
+            ConversationHistory.Add(FGenGeminiMessage(TEXT("user"), SystemPrompt));
+            ConversationHistory.Add(FGenGeminiMessage(TEXT("model"), FString(TEXT("Okay, I will be a helpful and concise assistant."))));
+        }
+    }
+    
     // 1. Add to history
     ConversationHistory.Add(FGenGeminiMessage(TEXT("user"), UserMessage));
     AccumulatedStreamedResponse.Empty();
 
     // 2. Configure settings
-    FGenGeminiChatSettings ChatSettings;
+    FGenGoogleChatSettings ChatSettings;
     ChatSettings.Model = ModelName;
     ChatSettings.Messages = ConversationHistory;
 

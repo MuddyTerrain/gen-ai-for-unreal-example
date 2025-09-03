@@ -32,6 +32,11 @@ void AGXOpenAIImageExample::RequestOpenAIImage(const FString& Prompt, const FStr
 	Settings.Quality = EGenAIImageQuality::Standard;
 	Settings.N = 1;
 
+	if (ModelName == TEXT("gpt-image-1"))
+	{
+		Settings.Quality = EGenAIImageQuality::Medium;
+	}
+
 	ActiveRequest = UGenOAIImageGeneration::SendImageGenerationRequest(Settings, FOnImageGenerationCompletionResponse::CreateUObject(this, &AGXOpenAIImageExample::OnImageResponse));
 }
 

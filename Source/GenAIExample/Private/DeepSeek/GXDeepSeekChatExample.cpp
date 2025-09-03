@@ -27,13 +27,25 @@ void AGXDeepSeekChatExample::EndPlay(const EEndPlayReason::Type EndPlayReason)
     Super::EndPlay(EndPlayReason);
 }
 
-void AGXDeepSeekChatExample::RequestNonStreamingChat(const FString& UserMessage, const FString& ModelName)
+void AGXDeepSeekChatExample::RequestNonStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& SystemPrompt)
 {
     if (ActiveRequestNonStreaming.IsValid()) return;
 
+    if (!SystemPrompt.IsEmpty())
+    {
+        if (ConversationHistory.Num() > 0 && ConversationHistory[0].Role == TEXT("system"))
+        {
+            ConversationHistory[0] = FGenChatMessage(TEXT("system"), {FGenAIMessageContent::FromText(SystemPrompt)});
+        }
+        else
+        {
+            ConversationHistory.Insert(FGenChatMessage(TEXT("system"), {FGenAIMessageContent::FromText(SystemPrompt)}), 0);
+        }
+    }
+
     ConversationHistory.Add(FGenChatMessage(TEXT("user"), {FGenAIMessageContent::FromText(UserMessage)}));
 
-    FGenDSeekChatSettings ChatSettings;
+    FGenDeepSeekChatSettings ChatSettings;
     ChatSettings.Model = ModelName;  // Set model directly as string
     ChatSettings.Messages = ConversationHistory;
 
@@ -59,13 +71,25 @@ void AGXDeepSeekChatExample::RequestNonStreamingChat(const FString& UserMessage,
     );
 }
 
-void AGXDeepSeekChatExample::RequestStreamingChat(const FString& UserMessage, const FString& ModelName)
+void AGXDeepSeekChatExample::RequestStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& SystemPrompt)
 {
     if (ActiveRequestStreaming.IsValid()) return;
 
+    if (!SystemPrompt.IsEmpty())
+    {
+        if (ConversationHistory.Num() > 0 && ConversationHistory[0].Role == TEXT("system"))
+        {
+            ConversationHistory[0] = FGenChatMessage(TEXT("system"), {FGenAIMessageContent::FromText(SystemPrompt)});
+        }
+        else
+        {
+            ConversationHistory.Insert(FGenChatMessage(TEXT("system"), {FGenAIMessageContent::FromText(SystemPrompt)}), 0);
+        }
+    }
+
     ConversationHistory.Add(FGenChatMessage(TEXT("user"), {FGenAIMessageContent::FromText(UserMessage)}));
 
-    FGenDSeekChatSettings ChatSettings;
+    FGenDeepSeekChatSettings ChatSettings;
     ChatSettings.Model = ModelName;  // Set model directly as string
     ChatSettings.Messages = ConversationHistory;
 

@@ -23,10 +23,10 @@ protected:
 
 public:
     UFUNCTION(BlueprintCallable, Category = "GenAI|DeepSeek Examples")
-    void RequestNonStreamingChat(const FString& UserMessage, const FString& ModelName);
+    void RequestNonStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& SystemPrompt = TEXT(""));
 
     UFUNCTION(BlueprintCallable, Category = "GenAI|DeepSeek Examples")
-    void RequestStreamingChat(const FString& UserMessage, const FString& ModelName);
+    void RequestStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& SystemPrompt = TEXT(""));
     
     UFUNCTION(BlueprintCallable, Category = "GenAI | UI Example")
     void ClearConversation();
