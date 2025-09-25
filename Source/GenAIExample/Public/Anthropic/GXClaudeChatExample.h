@@ -4,11 +4,11 @@
 #include "CoreMinimal.h"
 #include "GenAIExampleDelegates.h"
 #include "GameFramework/Actor.h"
+#if WITH_GENAI_MODULE
 #include "Data/Anthropic/GenClaudeChatStructs.h"
 #include "Http.h"
+#endif
 #include "GXClaudeChatExample.generated.h"
-
-struct FGenClaudeStreamEvent;
 
 UCLASS()
 class GENAIEXAMPLE_API AGXClaudeChatExample : public AActor
@@ -40,6 +40,7 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "GenAI|Events")
     FOnUINonStreamingResponse OnUINonStreamingResponse;
 
+#if WITH_GENAI_MODULE
 private:
 
     /** Stores the conversation history using Claude's message format */
@@ -47,4 +48,5 @@ private:
      
     /** Keeps track of the active HTTP requests to allow cancellation. */
     TSharedPtr<IHttpRequest, ESPMode::ThreadSafe> ActiveRequestNonStreaming;
+#endif
 };

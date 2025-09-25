@@ -2,16 +2,16 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GenAIExampleDelegates.h"
 #include "GameFramework/Actor.h"
-#include "Data/OpenAI/GenOAIChatStructs.h" // Correct struct for chat settings
-#include "Http.h"                          // For TWeakObjectPtr and request management
-#include "XAI/GXXAIChatExample.h"
+#include "Http.h"
+
+#if WITH_GENAI_MODULE
+#include "Data/GenAIMessageStructs.h"
+#include "Data/OpenAI/GenOAIStreamStructs.h"
+#endif
+
 #include "GXOpenAIChatExample.generated.h"
-
-// -- BLUEPRINT-FRIENDLY DELEGATES FOR UI --
-
-struct FGenOpenAIStreamEvent;
-
 
 UCLASS()
 class GENAIEXAMPLE_API AGXOpenAIChatExample : public AActor
@@ -62,6 +62,7 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "GenAI | Events")
     FOnUIStreamingError OnUIStreamingError;
 
+#if WITH_GENAI_MODULE
 private:
     // -- CORE PLUGIN INTEGRATION --
 
@@ -76,4 +77,5 @@ private:
     /** Keeps track of the active HTTP requests to allow cancellation. */
     FHttpRequestPtr ActiveRequestNonStreaming;
     FHttpRequestPtr ActiveRequestStreaming;
+#endif
 };

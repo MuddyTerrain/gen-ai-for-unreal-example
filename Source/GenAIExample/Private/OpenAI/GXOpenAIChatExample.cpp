@@ -1,36 +1,46 @@
 // Copyright 2025, Muddy Terrain Games, All Rights Reserved.
 
 #include "OpenAI/GXOpenAIChatExample.h"
+
+#if WITH_GENAI_MODULE
 #include "Models/OpenAI/GenOAIChat.h"
 #include "Models/OpenAI/GenOAIChatStream.h"
 #include "Utilities/GenUtils.h"
 #include "Misc/Paths.h"
 #include "UObject/UObjectGlobals.h"
 #include "UObject/EnumProperty.h"
+#endif
 
-
-
+#if WITH_GENAI_MODULE
 // Simple helper function to get model name from settings
 static FString GetModelFromSettings(const FGenOpenAIChatSettings& Settings)
 {
 	return Settings.Model;
 }
+#endif
 
 AGXOpenAIChatExample::AGXOpenAIChatExample()
 {
+#if WITH_GENAI_MODULE
     PrimaryActorTick.bCanEverTick = false;
     // Set a default system message to guide the AI's behavior
     ConversationHistory.Add(FGenChatMessage(TEXT("system"), TEXT("You are a helpful assistant integrated into an Unreal Engine application.")));
+#endif
 }
 
 void AGXOpenAIChatExample::ClearConversation()
 {
+#if WITH_GENAI_MODULE
     ConversationHistory.Empty();
     ConversationHistory.Add(FGenChatMessage(TEXT("system"), TEXT("You are a helpful assistant integrated into an Unreal Engine application.")));
+#else
+    // Dummy implementation
+#endif
 }
 
 void AGXOpenAIChatExample::RequestNonStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& SystemPrompt, UTexture2D* Image)
 {
+#if WITH_GENAI_MODULE
     if (!SystemPrompt.IsEmpty())
     {
         if (ConversationHistory.Num() > 0 && ConversationHistory[0].Role == TEXT("system"))
@@ -89,10 +99,14 @@ void AGXOpenAIChatExample::RequestNonStreamingChat(const FString& UserMessage, c
                 ActiveRequestNonStreaming.Reset();
             })
     );
+#else
+    UE_LOG(LogTemp, Warning, TEXT("GenAI module is not available. RequestNonStreamingChat will do nothing."));
+#endif
 }
 
 void AGXOpenAIChatExample::RequestStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& SystemPrompt, UTexture2D* Image)
 {
+#if WITH_GENAI_MODULE
     if (!SystemPrompt.IsEmpty())
     {
         if (ConversationHistory.Num() > 0 && ConversationHistory[0].Role == TEXT("system"))
@@ -130,8 +144,12 @@ void AGXOpenAIChatExample::RequestStreamingChat(const FString& UserMessage, cons
         ChatSettings, 
         FOnOpenAIChatStreamResponse::CreateUObject(this, &AGXOpenAIChatExample::OnStreamingChatEvent)
     );
+#else
+    UE_LOG(LogTemp, Warning, TEXT("GenAI module is not available. RequestStreamingChat will do nothing."));
+#endif
 }
 
+#if WITH_GENAI_MODULE
 void AGXOpenAIChatExample::OnStreamingChatEvent(const FGenOpenAIStreamEvent& StreamEvent)
 {
     if (!UGenUtils::IsContextStillValid(this)) return;
@@ -175,9 +193,11 @@ void AGXOpenAIChatExample::OnStreamingChatEvent(const FGenOpenAIStreamEvent& Str
             break;
     }
 }
+#endif
 
 void AGXOpenAIChatExample::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+#if WITH_GENAI_MODULE
     // Cancel any in-flight requests when the actor is destroyed to prevent crashes.
     if (ActiveRequestNonStreaming.IsValid() && ActiveRequestNonStreaming->GetStatus() == EHttpRequestStatus::Processing)
     {
@@ -187,6 +207,6 @@ void AGXOpenAIChatExample::EndPlay(const EEndPlayReason::Type EndPlayReason)
     {
         ActiveRequestStreaming->CancelRequest();
     }
-    
+#endif
     Super::EndPlay(EndPlayReason);
 }

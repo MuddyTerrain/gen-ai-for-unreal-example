@@ -1,26 +1,34 @@
 // Copyright 2025, Muddy Terrain Games, All Rights Reserved.
 
 #include "OpenAI/GXOpenAIStructuredOpExample.h"
+
+#if WITH_GENAI_MODULE
 #include "Data/OpenAI/GenOAIChatStructs.h" // Contains FGenOAIStructuredChatSettings
 #include "Data/GenAIMessageStructs.h"    // Contains FGenChatMessage
+#endif
 
 AGXOpenAIStructuredOpExample::AGXOpenAIStructuredOpExample()
 {
+#if WITH_GENAI_MODULE
     PrimaryActorTick.bCanEverTick = false;
+#endif
 }
 
 void AGXOpenAIStructuredOpExample::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+#if WITH_GENAI_MODULE
     // Cancel any active request when the actor is destroyed
     if (ActiveStructuredOpRequest.IsValid())
     {
         ActiveStructuredOpRequest->Cancel();
     }
+#endif
     Super::EndPlay(EndPlayReason);
 }
 
 void AGXOpenAIStructuredOpExample::RequestStructuredOperation(const FString& UserMessage, const FString& ModelName, const FString& Schema, const FString& SystemPrompt)
 {
+#if WITH_GENAI_MODULE
     // If there's an ongoing request, cancel it before starting a new one.
     if (ActiveStructuredOpRequest.IsValid())
     {
@@ -58,8 +66,12 @@ void AGXOpenAIStructuredOpExample::RequestStructuredOperation(const FString& Use
         UE_LOG(LogTemp, Error, TEXT("Failed to create RequestOpenAIStructuredOutput async action."));
         OnUIStructuredOpResponse.Broadcast(TEXT(""), TEXT("Failed to create async action."), false);
     }
+#else
+    UE_LOG(LogTemp, Warning, TEXT("GenAI module is not available. RequestStructuredOperation will do nothing."));
+#endif
 }
 
+#if WITH_GENAI_MODULE
 void AGXOpenAIStructuredOpExample::OnStructuredOpCompleted(const FString& Response, const FString& Error, bool bSuccess)
 {
     if (bSuccess)
@@ -77,3 +89,9 @@ void AGXOpenAIStructuredOpExample::OnStructuredOpCompleted(const FString& Respon
     // Clear the weak pointer as the action is now complete
     ActiveStructuredOpRequest.Reset();
 }
+#else
+void AGXOpenAIStructuredOpExample::OnStructuredOpCompleted(const FString& Response, const FString& Error, bool bSuccess)
+{
+    // Dummy implementation
+}
+#endif

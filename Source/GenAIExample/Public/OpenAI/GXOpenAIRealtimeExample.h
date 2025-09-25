@@ -7,10 +7,16 @@
 #include "Components/AudioComponent.h"
 #include "Containers/Queue.h"
 #include <atomic>
+
+#if WITH_GENAI_MODULE
+#include "Components/RealtimeAudioCaptureComponent.h"
+#include "Models/OpenAI/GenOAIRealtime.h"
+#endif
+
 #include "GXOpenAIRealtimeExample.generated.h"
 
-class UGenOAIRealtime;
 class URealtimeAudioCaptureComponent;
+class UGenOAIRealtime;
 class USoundWaveProcedural;
 class USoundSubmix;
 
@@ -28,6 +34,7 @@ enum class ERealtimeConversationState : uint8
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnRealtimeStateChanged, ERealtimeConversationState, NewState);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUserTranscriptUpdated, const FString&, Transcript);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAssistantTranscriptUpdated, const FString&, Transcript);
+
 
 UCLASS()
 class GENAIEXAMPLE_API AGXOpenAIRealtimeExample : public AActor
@@ -90,9 +97,14 @@ private:
     void HandleAudioGenerated(const float* InAudio, int32 NumSamples);
     void SetState(ERealtimeConversationState NewState);
 
-    UPROPERTY() TObjectPtr<UGenOAIRealtime> RealtimeService;
-    UPROPERTY(VisibleAnywhere) TObjectPtr<URealtimeAudioCaptureComponent> AudioCapture;
-    UPROPERTY() TObjectPtr<UAudioComponent> AIAudioPlayer;
+    UPROPERTY()
+    TObjectPtr<UObject> RealtimeService;
+    
+    UPROPERTY(VisibleAnywhere)
+    TObjectPtr<UObject> AudioCapture;
+    
+    UPROPERTY()
+    TObjectPtr<UAudioComponent> AIAudioPlayer;
     UPROPERTY() TObjectPtr<USoundWaveProcedural> AIResponseWave;
 
     UPROPERTY() ERealtimeConversationState CurrentState;
@@ -102,4 +114,5 @@ private:
     std::atomic<float> DisplayMicRms;
     TQueue<FString, EQueueMode::Mpsc> PendingUserTranscriptDeltas;
     TQueue<FString, EQueueMode::Mpsc> PendingAssistantTranscriptDeltas;
+
 };

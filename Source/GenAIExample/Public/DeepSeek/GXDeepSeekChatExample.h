@@ -3,11 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GenAIExampleDelegates.h"
 #include "GameFramework/Actor.h"
+#include "Http.h"
+
+#if WITH_GENAI_MODULE
 #include "Data/GenAIMessageStructs.h"
 #include "Data/DeepSeek/GenDeepSeekStructs.h"
-#include "Http.h"
-#include "OpenAI/GXOpenAIChatExample.h"
+#endif
+
 #include "GXDeepSeekChatExample.generated.h"
 
 UCLASS()
@@ -45,6 +49,7 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "GenAI | Events")
     FOnUIStreamingError OnUIStreamingError;
 
+#if WITH_GENAI_MODULE
 private:
     /**
      * @brief Handles raw streaming events directly from the GenDSeekChatStream class.
@@ -58,4 +63,5 @@ private:
     TArray<FGenChatMessage> ConversationHistory;
     FHttpRequestPtr ActiveRequestNonStreaming;
     FHttpRequestPtr ActiveRequestStreaming;
+#endif
 };

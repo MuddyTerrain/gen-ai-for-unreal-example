@@ -5,7 +5,9 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "GenAIExampleDelegates.h" // Include our central delegates
+#if WITH_GENAI_MODULE
 #include "Models/OpenAI/GenOAIStructuredOpService.h" // Required for the async action
+#endif
 #include "GXOpenAIStructuredOpExample.generated.h"
 
 UCLASS()
@@ -44,6 +46,8 @@ private:
 	UFUNCTION()
 	void OnStructuredOpCompleted(const FString& Response, const FString& Error, bool bSuccess);
 
+#if WITH_GENAI_MODULE
 	/** A handle to the active async action, used for cancellation. */
 	TWeakObjectPtr<UGenOAIStructuredOpService> ActiveStructuredOpRequest;
+#endif
 };

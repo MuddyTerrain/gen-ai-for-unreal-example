@@ -3,11 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GenAIExampleDelegates.h"
 #include "GameFramework/Actor.h"
+#include "Http.h"
+
+#if WITH_GENAI_MODULE
 #include "Data/Google/GenGeminiChatStructs.h"
 #include "Data/Google/GenGeminiStreamStructs.h"
-#include "Http.h"
-#include "XAI/GXXAIChatExample.h"
+#endif
+
 #include "GXGeminiChatExample.generated.h"
 
 UCLASS()
@@ -56,6 +60,7 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "GenAI | Events")
     FOnUIStreamingError OnUIStreamingError;
 
+#if WITH_GENAI_MODULE
 private:
     // -- CORE PLUGIN INTEGRATION --
 
@@ -73,5 +78,6 @@ private:
     
     /** Accumulates the full response from a streaming request. */
     FString AccumulatedStreamedResponse;
+#endif
 };
 

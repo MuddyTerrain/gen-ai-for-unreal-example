@@ -1,21 +1,27 @@
 // Copyright 2025, Muddy Terrain Games, All Rights Reserved.
 
 #include "XAI/GXXAIChatExample.h"
+
+#if WITH_GENAI_MODULE
 #include "Models/XAI/GenXAIChat.h"
 #include "Models/XAI/GenXAIChatStream.h"
 #include "Data/XAI/GenXAIChatStructs.h"
 #include "Utilities/GenUtils.h"
 #include "Misc/Paths.h"
+#endif
 
 AGXXAIChatExample::AGXXAIChatExample()
 {
+#if WITH_GENAI_MODULE
 	PrimaryActorTick.bCanEverTick = false;
 	// Add a default system message to guide the AI's behavior
 	ConversationHistory.Add(FGenXAIMessage(TEXT("system"), {FGenAIMessageContent::FromText(TEXT("You are a helpful assistant integrated into an Unreal Engine application."))}));
+#endif
 }
 
 void AGXXAIChatExample::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+#if WITH_GENAI_MODULE
 	// Cancel any in-flight requests to prevent crashes on actor destruction
 	if (ActiveRequestNonStreaming.IsValid() && ActiveRequestNonStreaming->GetStatus() == EHttpRequestStatus::Processing)
 	{
@@ -25,11 +31,13 @@ void AGXXAIChatExample::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	{
 		ActiveRequestStreaming->CancelRequest();
 	}
+#endif
 	Super::EndPlay(EndPlayReason);
 }
 
 void AGXXAIChatExample::RequestNonStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& SystemPrompt, UTexture2D* Image)
 {
+#if WITH_GENAI_MODULE
 	if (ActiveRequestNonStreaming.IsValid()) return;
 
     if (!SystemPrompt.IsEmpty())
@@ -85,10 +93,14 @@ void AGXXAIChatExample::RequestNonStreamingChat(const FString& UserMessage, cons
 				ActiveRequestNonStreaming.Reset();
 			})
 	);
+#else
+    UE_LOG(LogTemp, Warning, TEXT("GenAI module is not available. RequestNonStreamingChat will do nothing."));
+#endif
 }
 
 void AGXXAIChatExample::RequestStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& SystemPrompt, UTexture2D* Image)
 {
+#if WITH_GENAI_MODULE
 	if (ActiveRequestStreaming.IsValid()) return;
 
     if (!SystemPrompt.IsEmpty())
@@ -122,15 +134,23 @@ void AGXXAIChatExample::RequestStreamingChat(const FString& UserMessage, const F
 
 	// 4. Send the request, binding our handler function to the delegate
 	ActiveRequestStreaming = UGenXAIChatStream::SendStreamChatRequest(ChatSettings, FOnXAIChatStreamResponse::CreateUObject(this, &AGXXAIChatExample::OnStreamingChatEvent));
+#else
+    UE_LOG(LogTemp, Warning, TEXT("GenAI module is not available. RequestStreamingChat will do nothing."));
+#endif
 }
 
 void AGXXAIChatExample::ClearConversation()
 {
+#if WITH_GENAI_MODULE
 	ConversationHistory.Empty();
 	// Re-add the initial system message after clearing
 	ConversationHistory.Add(FGenXAIMessage(TEXT("system"), {FGenAIMessageContent::FromText(TEXT("You are a helpful assistant integrated into an Unreal Engine application."))}));
+#else
+    // Dummy implementation
+#endif
 }
 
+#if WITH_GENAI_MODULE
 void AGXXAIChatExample::OnStreamingChatEvent(EXAIStreamEventType EventType, const FString& Payload, bool bSuccess)
 {
 	if (!UGenUtils::IsContextStillValid(this)) return;
@@ -165,9 +185,12 @@ void AGXXAIChatExample::OnStreamingChatEvent(EXAIStreamEventType EventType, cons
 			 break;
 	}
 }
+#endif
 
+#if WITH_GENAI_MODULE
 // Simple helper to use model name directly as string
 static FString GetXAIModelFromString(const FString& ModelName)
 {
     return ModelName;
 }
+#endif

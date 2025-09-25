@@ -5,7 +5,9 @@
 #include "CoreMinimal.h"
 #include "GenAIExampleDelegates.h"
 #include "GameFramework/Actor.h"
+#if WITH_GENAI_MODULE
 #include "Http.h"
+#endif
 #include "GXOpenAIImageExample.generated.h"
 
 UCLASS()
@@ -34,8 +36,10 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "GenAI | Events")
 	FOnImageGenerationError OnImageGenerationError;
 
+#if WITH_GENAI_MODULE
 private:
 	void OnImageResponse(const TArray<uint8>& ImageBytes, const FString& Error, bool bSuccess);
 
 	FHttpRequestPtr ActiveRequest;
+#endif
 };

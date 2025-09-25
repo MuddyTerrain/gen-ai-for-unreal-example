@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 using UnrealBuildTool;
+using System.IO;
 
 public class GenAIExample : ModuleRules
 {
@@ -8,9 +9,22 @@ public class GenAIExample : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "GenAI", "UMG" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "UMG" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "AudioMixer", "AudioCapture" });
+
+		// Check if the GenAIForUnreal plugin directory exists as a project or engine plugin
+		string ProjectGenAIPluginPath = Path.Combine(ModuleDirectory, "..", "..", "Plugins", "GenAIForUnreal");
+		string EngineGenAIPluginPath = Path.Combine(EngineDirectory, "Plugins", "Fab", "GenAIForUnreal");
+		if (Directory.Exists(ProjectGenAIPluginPath) || Directory.Exists(EngineGenAIPluginPath))
+		{
+			PublicDependencyModuleNames.Add("GenAI");
+			PublicDefinitions.Add("WITH_GENAI_MODULE=0");
+		}
+		else
+		{
+			PublicDefinitions.Add("WITH_GENAI_MODULE=0");
+		}
 
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
