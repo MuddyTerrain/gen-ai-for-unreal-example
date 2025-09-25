@@ -1,3 +1,6 @@
 [submodule "Plugins/GenAIForUnreal"]
 	path = Plugins/GenAIForUnreal
 	url = https://github.com/MuddyTerrain/GenAIForUnreal
+[submodule "Plugins/GenAIChineseModels"]
+	path = Plugins/GenAIChineseModels
+	url = https://github.com/MuddyTerrain/GenAIChineseModels

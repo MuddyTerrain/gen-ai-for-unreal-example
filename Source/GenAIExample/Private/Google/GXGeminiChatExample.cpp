@@ -1,30 +1,39 @@
 // Copyright 2025, Muddy Terrain Games, All Rights Reserved.
 
 #include "Google/GXGeminiChatExample.h"
+
+#if WITH_GENAI_MODULE
 #include "Models/Google/GenGeminiChat.h"
 #include "Models/Google/GenGeminiChatStream.h"
 #include "Utilities/GenUtils.h"
-
+#endif
 
 AGXGeminiChatExample::AGXGeminiChatExample()
 {
+#if WITH_GENAI_MODULE
     PrimaryActorTick.bCanEverTick = false;
     // Set a default system message to guide the AI's behavior.
     // Note: Gemini API prefers the 'user'/'model' role cycle. A system prompt is often the first 'user' message.
     ConversationHistory.Add(FGenGeminiMessage(TEXT("user"), FString(TEXT("You are a helpful assistant integrated into an Unreal Engine application. Please keep your responses concise."))));
     ConversationHistory.Add(FGenGeminiMessage(TEXT("model"), FString(TEXT("Okay, I will be a helpful and concise assistant."))));
+#endif
 }
 
 void AGXGeminiChatExample::ClearConversation()
 {
+#if WITH_GENAI_MODULE
     ConversationHistory.Empty();
     ConversationHistory.Add(FGenGeminiMessage(TEXT("user"), FString(TEXT("You are a helpful assistant integrated into an Unreal Engine application. Please keep your responses concise."))));
     ConversationHistory.Add(FGenGeminiMessage(TEXT("model"), FString(TEXT("Okay, I will be a helpful and concise assistant."))));
     AccumulatedStreamedResponse.Empty();
+#else
+    // Dummy implementation
+#endif
 }
 
 void AGXGeminiChatExample::RequestNonStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& SystemPrompt)
 {
+#if WITH_GENAI_MODULE
     if (!SystemPrompt.IsEmpty())
     {
         if (ConversationHistory.Num() > 0)
@@ -69,10 +78,14 @@ void AGXGeminiChatExample::RequestNonStreamingChat(const FString& UserMessage, c
                 ActiveRequestNonStreaming.Reset();
             })
     );
+#else
+    UE_LOG(LogTemp, Warning, TEXT("GenAI module is not available. RequestNonStreamingChat will do nothing."));
+#endif
 }
 
 void AGXGeminiChatExample::RequestStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& SystemPrompt)
 {
+#if WITH_GENAI_MODULE
     if (!SystemPrompt.IsEmpty())
     {
         if (ConversationHistory.Num() > 0)
@@ -100,8 +113,12 @@ void AGXGeminiChatExample::RequestStreamingChat(const FString& UserMessage, cons
         ChatSettings,
         FOnGeminiChatStreamResponse::CreateUObject(this, &AGXGeminiChatExample::OnStreamingChatEvent)
     );
+#else
+    UE_LOG(LogTemp, Warning, TEXT("GenAI module is not available. RequestStreamingChat will do nothing."));
+#endif
 }
 
+#if WITH_GENAI_MODULE
 void AGXGeminiChatExample::OnStreamingChatEvent(EGoogleGeminiStreamEventType EventType, const FGeminiGenerateContentResponseChunk& Chunk, const FString& ErrorMessage, bool bSuccess)
 {
     if (!UGenUtils::IsContextStillValid(this)) return;
@@ -144,9 +161,11 @@ void AGXGeminiChatExample::OnStreamingChatEvent(EGoogleGeminiStreamEventType Eve
             break;
     }
 }
+#endif
 
 void AGXGeminiChatExample::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+#if WITH_GENAI_MODULE
     if (ActiveRequestNonStreaming.IsValid() && ActiveRequestNonStreaming->GetStatus() == EHttpRequestStatus::Processing)
     {
         ActiveRequestNonStreaming->CancelRequest();
@@ -155,6 +174,6 @@ void AGXGeminiChatExample::EndPlay(const EEndPlayReason::Type EndPlayReason)
     {
         ActiveRequestStreaming->CancelRequest();
     }
-
+#endif
     Super::EndPlay(EndPlayReason);
 }

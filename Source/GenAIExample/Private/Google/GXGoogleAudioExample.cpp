@@ -1,6 +1,8 @@
 // Copyright 2025, Muddy Terrain Games, All Rights Reserved.
 
 #include "Google/GXGoogleAudioExample.h"
+
+#if WITH_GENAI_MODULE
 #include "Models/Google/GenGoogleTextToSpeech.h"
 #include "Models/Google/GenGoogleTranscription.h"
 #include "Utilities/GenUtils.h"
@@ -9,7 +11,9 @@
 #include "Utilities/GenAIAudioUtils.h"
 #include "Misc/DateTime.h"
 #include "Sound/SoundWave.h"
+#endif
 
+#if WITH_GENAI_MODULE
 EGoogleAIVoice AGXGoogleAudioExample::StringToGoogleVoice(const FString& VoiceName)
 {
     EGoogleAIVoice Voice = EGoogleAIVoice::Zephyr;
@@ -23,15 +27,19 @@ EGoogleAIVoice AGXGoogleAudioExample::StringToGoogleVoice(const FString& VoiceNa
     }
     return Voice;
 }
+#endif
 
 AGXGoogleAudioExample::AGXGoogleAudioExample()
 {
+#if WITH_GENAI_MODULE
     PrimaryActorTick.bCanEverTick = false;
     RecordingSubmix = nullptr;
+#endif
 }
 
 void AGXGoogleAudioExample::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+#if WITH_GENAI_MODULE
     // Clear any pending timers
     GetWorld()->GetTimerManager().ClearTimer(FileWriteDelayTimer);
 
@@ -44,12 +52,13 @@ void AGXGoogleAudioExample::EndPlay(const EEndPlayReason::Type EndPlayReason)
     {
         ActiveTranscriptionRequest->CancelRequest();
     }
-
+#endif
     Super::EndPlay(EndPlayReason);
 }
 
 void AGXGoogleAudioExample::RequestTextToSpeech(const FString& TextToSpeak, const FString& ModelName, const FString& VoiceName)
 {
+#if WITH_GENAI_MODULE
     FGoogleTextToSpeechSettings TTSSettings;
     TTSSettings.Model = ModelName;
     UE_LOG(LogTemp, Log, TEXT("Requesting TTS with Model: %s, Custom Model: %s"), *ModelName, *ModelName);
@@ -87,10 +96,14 @@ void AGXGoogleAudioExample::RequestTextToSpeech(const FString& TextToSpeak, cons
                 
                 WeakThis->ActiveTTSRequest.Reset();
             }));
+#else
+    UE_LOG(LogTemp, Warning, TEXT("GenAI module is not available. RequestTextToSpeech will do nothing."));
+#endif
 }
 
 void AGXGoogleAudioExample::RequestTranscriptionFromFile(const FString& AudioFilePath, const FString& ModelName, const FString& Prompt)
 {
+#if WITH_GENAI_MODULE
     if (!FPaths::FileExists(AudioFilePath))
     {
         OnUITranscriptionResponse.Broadcast(TEXT("File not found: ") + AudioFilePath, false); 
@@ -116,10 +129,14 @@ void AGXGoogleAudioExample::RequestTranscriptionFromFile(const FString& AudioFil
                 WeakThis->OnUITranscriptionResponse.Broadcast(bSuccess ? Transcript : Error, bSuccess);
                 WeakThis->ActiveTranscriptionRequest.Reset();
             }));
+#else
+    UE_LOG(LogTemp, Warning, TEXT("GenAI module is not available. RequestTranscriptionFromFile will do nothing."));
+#endif
 }
 
 void AGXGoogleAudioExample::RequestTranscriptionFromData(const TArray<uint8>& AudioData, const FString& ModelName, const FString& Prompt)
 {
+#if WITH_GENAI_MODULE
     if (AudioData.Num() == 0)
     {
         OnUITranscriptionResponse.Broadcast(TEXT("No audio data provided"), false);
@@ -142,10 +159,14 @@ void AGXGoogleAudioExample::RequestTranscriptionFromData(const TArray<uint8>& Au
                 WeakThis->OnUITranscriptionResponse.Broadcast(bSuccess ? Transcript : Error, bSuccess);
                 WeakThis->ActiveTranscriptionRequest.Reset();
             }));
+#else
+    UE_LOG(LogTemp, Warning, TEXT("GenAI module is not available. RequestTranscriptionFromData will do nothing."));
+#endif
 }
 
 void AGXGoogleAudioExample::StartRecording(const FString& ModelName, const FString& Prompt)
 {
+#if WITH_GENAI_MODULE
     if (!RecordingSubmix)
     {
         UE_LOG(LogTemp, Warning, TEXT("StartRecording: No RecordingSubmix specified. Please assign it in the editor."));
@@ -157,10 +178,14 @@ void AGXGoogleAudioExample::StartRecording(const FString& ModelName, const FStri
 
     UAudioMixerBlueprintLibrary::StartRecordingOutput(this, 0.f, RecordingSubmix);
     UE_LOG(LogTemp, Log, TEXT("Started recording submix '%s'"), *RecordingSubmix->GetName());
+#else
+    UE_LOG(LogTemp, Warning, TEXT("GenAI module is not available. StartRecording will do nothing."));
+#endif
 }
 
 void AGXGoogleAudioExample::StopRecordingAndTranscribe()
 {
+#if WITH_GENAI_MODULE
     if (!RecordingSubmix)
     {
         UE_LOG(LogTemp, Warning, TEXT("StopRecordingAndTranscribe: No RecordingSubmix specified."));
@@ -180,8 +205,12 @@ void AGXGoogleAudioExample::StopRecordingAndTranscribe()
         [this, BaseFileName]() { ProcessRecordedFile(BaseFileName); },
         0.2f,
         false);
+#else
+    UE_LOG(LogTemp, Warning, TEXT("GenAI module is not available. StopRecordingAndTranscribe will do nothing."));
+#endif
 }
 
+#if WITH_GENAI_MODULE
 void AGXGoogleAudioExample::ProcessRecordedFile(FString BaseFileName)
 {
     UE_LOG(LogTemp, Log, TEXT("Timer finished. Processing file: %s.wav"), *BaseFileName);
@@ -210,3 +239,4 @@ void AGXGoogleAudioExample::ProcessRecordedFile(FString BaseFileName)
     UE_LOG(LogTemp, Log, TEXT("Sending %d bytes of WAV data for transcription."), WavData.Num());
     RequestTranscriptionFromData(WavData, TranscriptionModelName, TranscriptionPrompt);
 }
+#endif

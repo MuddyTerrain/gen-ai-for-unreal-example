@@ -5,8 +5,10 @@
 #include "CoreMinimal.h"
 #include "GenAIExampleDelegates.h"
 #include "GameFramework/Actor.h"
+#if WITH_GENAI_MODULE
 #include "Data/Google/GenGoogleAudioStructs.h"
 #include "Http.h"
+#endif
 #include "Sound/SoundSubmix.h"
 #include "GXGoogleAudioExample.generated.h"
 
@@ -85,6 +87,7 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "GenAI|Events")
     FOnUITranscriptionResponse OnUITranscriptionResponse;
 
+#if WITH_GENAI_MODULE
 private:
     static EGoogleAIVoice StringToGoogleVoice(const FString& VoiceName);
     
@@ -101,4 +104,5 @@ private:
     // -- Internal state for recording --
     FString TranscriptionModelName;
     FString TranscriptionPrompt;
+#endif
 };

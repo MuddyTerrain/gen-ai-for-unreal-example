@@ -2,6 +2,7 @@
 
 #include "OpenAI/GXOpenAIAudioExample.h"
 
+#if WITH_GENAI_MODULE
 #include "AudioCaptureComponent.h"
 #include "Models/OpenAI/GenOAITextToSpeech.h"
 #include "Models/OpenAI/GenOAITranscription.h"
@@ -11,10 +12,11 @@
 #include "Utilities/GenAIAudioUtils.h"
 #include "Data/OpenAI/GenOAIAudioStructs.h"
 #include "Components/SceneComponent.h"
-
+#endif
 
 AGXOpenAIAudioExample::AGXOpenAIAudioExample()
 {
+#if WITH_GENAI_MODULE
     PrimaryActorTick.bCanEverTick = false;
 
     // Create a root component
@@ -30,10 +32,12 @@ AGXOpenAIAudioExample::AGXOpenAIAudioExample()
     }
     
     RecordingSubmix = nullptr;
+#endif
 }
 
 void AGXOpenAIAudioExample::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+#if WITH_GENAI_MODULE
     // Clear any pending timers
     GetWorld()->GetTimerManager().ClearTimer(FileWriteDelayTimer);
     
@@ -47,12 +51,13 @@ void AGXOpenAIAudioExample::EndPlay(const EEndPlayReason::Type EndPlayReason)
     {
         ActiveTranscriptionRequest->CancelRequest();
     }
-
+#endif
     Super::EndPlay(EndPlayReason);
 }
 
 void AGXOpenAIAudioExample::RequestTextToSpeech(const FString& TextToSpeak, const FString& ModelName)
 {
+#if WITH_GENAI_MODULE
     FGenOAITextToSpeechSettings TTSSettings;
     TTSSettings.Model = ModelName;  // Set model directly as string
     TTSSettings.InputText = TextToSpeak;
@@ -88,10 +93,14 @@ void AGXOpenAIAudioExample::RequestTextToSpeech(const FString& TextToSpeak, cons
                 
                 WeakThis->ActiveTTSRequest.Reset();
             }));
+#else
+    UE_LOG(LogTemp, Warning, TEXT("GenAI module is not available. RequestTextToSpeech will do nothing."));
+#endif
 }
 
 void AGXOpenAIAudioExample::RequestTranscriptionFromFile(const FString& AudioFilePath, const FString& ModelName, const FString& Prompt, const FString& Language)
 {
+#if WITH_GENAI_MODULE
     if (!FPaths::FileExists(AudioFilePath))
     {
         OnUITranscriptionResponse.Broadcast(TEXT("File not found: ") + AudioFilePath, false);
@@ -115,10 +124,14 @@ void AGXOpenAIAudioExample::RequestTranscriptionFromFile(const FString& AudioFil
                 WeakThis->OnUITranscriptionResponse.Broadcast(bSuccess ? Transcript : Error, bSuccess);
                 WeakThis->ActiveTranscriptionRequest.Reset();
             }));
+#else
+    UE_LOG(LogTemp, Warning, TEXT("GenAI module is not available. RequestTranscriptionFromFile will do nothing."));
+#endif
 }
 
 void AGXOpenAIAudioExample::RequestTranscriptionFromData(const TArray<uint8>& AudioData, const FString& ModelName, const FString& Prompt, const FString& Language)
 {
+#if WITH_GENAI_MODULE
     if (AudioData.Num() == 0)
     {
         OnUITranscriptionResponse.Broadcast(TEXT("No audio data provided"), false);
@@ -142,10 +155,14 @@ void AGXOpenAIAudioExample::RequestTranscriptionFromData(const TArray<uint8>& Au
                 WeakThis->OnUITranscriptionResponse.Broadcast(bSuccess ? Transcript : Error, bSuccess);
                 WeakThis->ActiveTranscriptionRequest.Reset();
             }));
+#else
+    UE_LOG(LogTemp, Warning, TEXT("GenAI module is not available. RequestTranscriptionFromData will do nothing."));
+#endif
 }
 
 void AGXOpenAIAudioExample::StartRecording(const FString& ModelName, const FString& Prompt, const FString& Language)
 {
+#if WITH_GENAI_MODULE
     if (!RecordingSubmix)
     {
         UE_LOG(LogTemp, Warning, TEXT("StartRecording: No RecordingSubmix specified. Please assign it in the editor."));
@@ -171,10 +188,14 @@ void AGXOpenAIAudioExample::StartRecording(const FString& ModelName, const FStri
 
     UAudioMixerBlueprintLibrary::StartRecordingOutput(this, 0.f, RecordingSubmix);
     UE_LOG(LogTemp, Log, TEXT("Started recording submix '%s' and audio capture."), *RecordingSubmix->GetName());
+#else
+    UE_LOG(LogTemp, Warning, TEXT("GenAI module is not available. StartRecording will do nothing."));
+#endif
 }
 
 void AGXOpenAIAudioExample::StopRecordingAndTranscribe()
 {
+#if WITH_GENAI_MODULE
     if (!RecordingSubmix)
     {
         UE_LOG(LogTemp, Warning, TEXT("StopRecordingAndTranscribe: No RecordingSubmix specified."));
@@ -204,8 +225,12 @@ void AGXOpenAIAudioExample::StopRecordingAndTranscribe()
         [this, BaseFileName]() { ProcessRecordedFile(BaseFileName); },
         0.2f,
         false);
+#else
+    UE_LOG(LogTemp, Warning, TEXT("GenAI module is not available. StopRecordingAndTranscribe will do nothing."));
+#endif
 }
 
+#if WITH_GENAI_MODULE
 void AGXOpenAIAudioExample::ProcessRecordedFile(FString BaseFileName)
 {
     UE_LOG(LogTemp, Log, TEXT("Timer finished. Processing file: %s.wav"), *BaseFileName);
@@ -234,3 +259,4 @@ void AGXOpenAIAudioExample::ProcessRecordedFile(FString BaseFileName)
     UE_LOG(LogTemp, Log, TEXT("Sending %d bytes of WAV data for transcription."), WavData.Num());
     RequestTranscriptionFromData(WavData, TranscriptionModelName, TranscriptionPrompt, TranscriptionLanguage);
 }
+#endif

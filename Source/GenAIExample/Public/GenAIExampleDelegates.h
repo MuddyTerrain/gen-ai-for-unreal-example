@@ -32,6 +32,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUITranscriptionResponse, const F
  */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnUIStructuredOpResponse, const FString&, JsonResponse, const FString&, ErrorMessage, bool, bSuccess);
 
+
 /**
  * 
  */

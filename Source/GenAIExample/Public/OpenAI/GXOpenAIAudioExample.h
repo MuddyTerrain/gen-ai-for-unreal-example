@@ -5,7 +5,9 @@
 #include "CoreMinimal.h"
 #include "GenAIExampleDelegates.h"
 #include "GameFramework/Actor.h"
+#if WITH_GENAI_MODULE
 #include "Http.h"
+#endif
 #include "GXOpenAIAudioExample.generated.h"
 
 class UAudioCaptureComponent;
@@ -96,6 +98,7 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "GenAI|Events")
     FOnUITranscriptionResponse OnUITranscriptionResponse;
 
+#if WITH_GENAI_MODULE
 private:
     /** The actual file processing logic, called after a delay to avoid race conditions. */
     void ProcessRecordedFile(FString BaseFileName);
@@ -111,4 +114,5 @@ private:
     FString TranscriptionModelName;
     FString TranscriptionPrompt;
     FString TranscriptionLanguage;
+#endif
 };

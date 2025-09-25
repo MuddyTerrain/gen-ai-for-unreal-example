@@ -1,26 +1,35 @@
 // Copyright 2025, Muddy Terrain Games, All Rights Reserved.
 
 #include "Anthropic/GXClaudeChatExample.h"
+
+#if WITH_GENAI_MODULE
 #include "Models/Anthropic/GenClaudeChat.h"
 #include "Utilities/GenUtils.h"
 #include "Misc/Paths.h"
-
+#endif
 
 AGXClaudeChatExample::AGXClaudeChatExample()
 {
+#if WITH_GENAI_MODULE
     PrimaryActorTick.bCanEverTick = false;
     // Set a default system message
     ConversationHistory.Add(FGenClaudeChatMessage(TEXT("system"), TEXT("You are Claude, a helpful AI assistant integrated into an Unreal Engine application.")));
+#endif
 }
 
 void AGXClaudeChatExample::ClearConversation()
 {
+#if WITH_GENAI_MODULE
     ConversationHistory.Empty();
     ConversationHistory.Add(FGenClaudeChatMessage(TEXT("system"), TEXT("You are Claude, a helpful AI assistant integrated into an Unreal Engine application.")));
+#else
+    // Dummy implementation
+#endif
 }
 
 void AGXClaudeChatExample::RequestNonStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& SystemPrompt, UTexture2D* Image)
 {
+#if WITH_GENAI_MODULE
     if (!SystemPrompt.IsEmpty())
     {
         if (ConversationHistory.Num() > 0 && ConversationHistory[0].Role == TEXT("system"))
@@ -76,15 +85,20 @@ void AGXClaudeChatExample::RequestNonStreamingChat(const FString& UserMessage, c
                 ActiveRequestNonStreaming.Reset();
             })
     );
+#else
+    // Dummy implementation
+    UE_LOG(LogTemp, Warning, TEXT("GenAI module is not available. RequestNonStreamingChat will do nothing."));
+#endif
 }
 
 void AGXClaudeChatExample::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+#if WITH_GENAI_MODULE
     // Cancel any active requests
     if (ActiveRequestNonStreaming.IsValid())
     {
         ActiveRequestNonStreaming->CancelRequest();
     }
-    
+#endif
     Super::EndPlay(EndPlayReason);
 }

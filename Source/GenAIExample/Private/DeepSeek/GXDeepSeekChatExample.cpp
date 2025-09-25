@@ -1,21 +1,26 @@
 // Copyright 2025, Muddy Terrain Games, All Rights Reserved.
 
 #include "DeepSeek/GXDeepSeekChatExample.h"
+
+#if WITH_GENAI_MODULE
 #include "Models/DeepSeek/GenDSeekChat.h"
 #include "Models/DeepSeek/GenDSeekChatStream.h"
 #include "Data/GenAIMessageStructs.h"
 #include "Data/DeepSeek/GenDeepSeekStructs.h"
 #include "Utilities/GenUtils.h"
-
+#endif
 
 AGXDeepSeekChatExample::AGXDeepSeekChatExample()
 {
+#if WITH_GENAI_MODULE
     PrimaryActorTick.bCanEverTick = false;
     ConversationHistory.Add(FGenChatMessage(TEXT("system"), {FGenAIMessageContent::FromText(TEXT("You are a helpful assistant integrated into an Unreal Engine application."))}));
+#endif
 }
 
 void AGXDeepSeekChatExample::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+#if WITH_GENAI_MODULE
     if (ActiveRequestNonStreaming.IsValid() && ActiveRequestNonStreaming->GetStatus() == EHttpRequestStatus::Processing)
     {
         ActiveRequestNonStreaming->CancelRequest();
@@ -24,11 +29,13 @@ void AGXDeepSeekChatExample::EndPlay(const EEndPlayReason::Type EndPlayReason)
     {
         ActiveRequestStreaming->CancelRequest();
     }
+#endif
     Super::EndPlay(EndPlayReason);
 }
 
 void AGXDeepSeekChatExample::RequestNonStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& SystemPrompt)
 {
+#if WITH_GENAI_MODULE
     if (ActiveRequestNonStreaming.IsValid()) return;
 
     if (!SystemPrompt.IsEmpty())
@@ -69,10 +76,14 @@ void AGXDeepSeekChatExample::RequestNonStreamingChat(const FString& UserMessage,
                 ActiveRequestNonStreaming.Reset();
             })
     );
+#else
+    UE_LOG(LogTemp, Warning, TEXT("GenAI module is not available. RequestNonStreamingChat will do nothing."));
+#endif
 }
 
 void AGXDeepSeekChatExample::RequestStreamingChat(const FString& UserMessage, const FString& ModelName, const FString& SystemPrompt)
 {
+#if WITH_GENAI_MODULE
     if (ActiveRequestStreaming.IsValid()) return;
 
     if (!SystemPrompt.IsEmpty())
@@ -95,14 +106,22 @@ void AGXDeepSeekChatExample::RequestStreamingChat(const FString& UserMessage, co
 
     // This delegate is of type FOnDSeekChatStreamResponse, which we now correctly handle in OnStreamingChatEvent.
     ActiveRequestStreaming = UGenDSeekChatStream::SendStreamChatRequest(ChatSettings, FOnDSeekChatStreamResponse::CreateUObject(this, &AGXDeepSeekChatExample::OnStreamingChatEvent));
+#else
+    UE_LOG(LogTemp, Warning, TEXT("GenAI module is not available. RequestStreamingChat will do nothing."));
+#endif
 }
 
 void AGXDeepSeekChatExample::ClearConversation()
 {
+#if WITH_GENAI_MODULE
     ConversationHistory.Empty();
     ConversationHistory.Add(FGenChatMessage(TEXT("system"), {FGenAIMessageContent::FromText(TEXT("You are a helpful assistant integrated into an Unreal Engine application."))}));
+#else
+    // Dummy implementation
+#endif
 }
 
+#if WITH_GENAI_MODULE
 void AGXDeepSeekChatExample::OnStreamingChatEvent(EDeepSeekStreamEventType EventType, const FString& Payload, bool bSuccess)
 {
     if (!UGenUtils::IsContextStillValid(this)) return;
@@ -142,3 +161,4 @@ void AGXDeepSeekChatExample::OnStreamingChatEvent(EDeepSeekStreamEventType Event
             break;
     }
 }
+#endif

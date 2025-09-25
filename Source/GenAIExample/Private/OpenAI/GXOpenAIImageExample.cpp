@@ -2,27 +2,34 @@
 
 #include "OpenAI/GXOpenAIImageExample.h"
 
+#if WITH_GENAI_MODULE
 #include "Models/OpenAI/GenOAIImageGeneration.h"
 #include "Data/OpenAI/GenOAIImageStructs.h"
 #include "Utilities/GenUtils.h"
 #include "ImageUtils.h"
+#endif
 
 AGXOpenAIImageExample::AGXOpenAIImageExample()
 {
+#if WITH_GENAI_MODULE
 	PrimaryActorTick.bCanEverTick = false;
+#endif
 }
 
 void AGXOpenAIImageExample::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+#if WITH_GENAI_MODULE
 	if (ActiveRequest.IsValid() && ActiveRequest->GetStatus() == EHttpRequestStatus::Processing)
 	{
 		ActiveRequest->CancelRequest();
 	}
+#endif
 	Super::EndPlay(EndPlayReason);
 }
 
 void AGXOpenAIImageExample::RequestOpenAIImage(const FString& Prompt, const FString& ModelName)
 {
+#if WITH_GENAI_MODULE
 	if (ActiveRequest.IsValid()) return;
 
 	FGenOAIImageSettings Settings;
@@ -38,8 +45,12 @@ void AGXOpenAIImageExample::RequestOpenAIImage(const FString& Prompt, const FStr
 	}
 
 	ActiveRequest = UGenOAIImageGeneration::SendImageGenerationRequest(Settings, FOnImageGenerationCompletionResponse::CreateUObject(this, &AGXOpenAIImageExample::OnImageResponse));
+#else
+	UE_LOG(LogTemp, Warning, TEXT("GenAI module is not available. RequestOpenAIImage will do nothing."));
+#endif
 }
 
+#if WITH_GENAI_MODULE
 void AGXOpenAIImageExample::OnImageResponse(const TArray<uint8>& ImageBytes, const FString& Error, bool bSuccess)
 {
 	if (bSuccess)
@@ -54,3 +65,4 @@ void AGXOpenAIImageExample::OnImageResponse(const TArray<uint8>& ImageBytes, con
 	}
 	ActiveRequest.Reset();
 }
+#endif

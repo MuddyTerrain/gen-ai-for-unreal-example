@@ -5,13 +5,12 @@
 #include "CoreMinimal.h"
 #include "GenAIExampleDelegates.h"
 #include "GameFramework/Actor.h"
+#if WITH_GENAI_MODULE
 #include "Data/XAI/GenXAIChatStructs.h" // For XAI-specific structs
 #include "Http.h"
+#include "Data/XAI/GenXAIChatStreamStructs.h"
+#endif
 #include "GXXAIChatExample.generated.h"
-
-// Forward declaration for the stream event enum
-enum class EXAIStreamEventType : uint8;
-
 
 UCLASS()
 class GENAIEXAMPLE_API AGXXAIChatExample : public AActor
@@ -61,6 +60,7 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "GenAI | Events")
 	FOnUIStreamingError OnUIStreamingError;
 
+#if WITH_GENAI_MODULE
 private:
 	/**
 	 * @brief Handles raw streaming events directly from the GenXAIChatStream class.
@@ -78,4 +78,5 @@ private:
 	/** Keeps track of active requests to allow for cancellation. */
 	FHttpRequestPtr ActiveRequestNonStreaming;
 	FHttpRequestPtr ActiveRequestStreaming;
+#endif
 };

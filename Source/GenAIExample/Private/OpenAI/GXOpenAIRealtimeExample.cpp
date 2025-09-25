@@ -1,6 +1,8 @@
 // Copyright 2025, Muddy Terrain Games, All Rights Reserved.
 
 #include "OpenAI/GXOpenAIRealtimeExample.h"
+
+#if WITH_GENAI_MODULE
 #include "Components/RealtimeAudioCaptureComponent.h"
 #include "Models/OpenAI/GenOAIRealtime.h"
 #include "Sound/SoundWaveProcedural.h"
@@ -10,53 +12,59 @@
 #include "Async/Async.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogRealtimeFSM, Log, All);
+#endif
 
 AGXOpenAIRealtimeExample::AGXOpenAIRealtimeExample()
 {
+#if WITH_GENAI_MODULE
     PrimaryActorTick.bCanEverTick = true;
     CurrentState = ERealtimeConversationState::Idle;
     AudioCapture = CreateDefaultSubobject<URealtimeAudioCaptureComponent>(TEXT("AudioCapture"));
     AIAudioPlayer = CreateDefaultSubobject<UAudioComponent>(TEXT("AIAudioPlayer"));
+#endif
 }
 
 void AGXOpenAIRealtimeExample::BeginPlay()
 {
     Super::BeginPlay();
-    
+#if WITH_GENAI_MODULE
     RealtimeService = UGenOAIRealtime::CreateRealtimeService(this);
-    if (RealtimeService)
+    if (auto* Service = Cast<UGenOAIRealtime>(RealtimeService))
     {
-        RealtimeService->OnConnectedBP.AddDynamic(this, &AGXOpenAIRealtimeExample::HandleRealtimeConnected);
-        RealtimeService->OnConnectionErrorBP.AddDynamic(this, &AGXOpenAIRealtimeExample::HandleRealtimeConnectionError);
-        RealtimeService->OnDisconnectedBP.AddDynamic(this, &AGXOpenAIRealtimeExample::HandleRealtimeDisconnected);
-        RealtimeService->OnAudioResponseBP.AddDynamic(this, &AGXOpenAIRealtimeExample::HandleRealtimeAudioResponse);
-        RealtimeService->OnUserTranscriptDeltaBP.AddDynamic(this, &AGXOpenAIRealtimeExample::HandleUserTranscriptDelta);
-        RealtimeService->OnAssistantTranscriptDeltaBP.AddDynamic(this, &AGXOpenAIRealtimeExample::HandleAssistantTranscriptDelta);
-        RealtimeService->OnServerSpeechStartedBP.AddDynamic(this, &AGXOpenAIRealtimeExample::HandleServerSpeechStarted);
-        RealtimeService->OnServerSpeechStoppedBP.AddDynamic(this, &AGXOpenAIRealtimeExample::HandleServerSpeechStopped);
+        Service->OnConnectedBP.AddDynamic(this, &AGXOpenAIRealtimeExample::HandleRealtimeConnected);
+        Service->OnConnectionErrorBP.AddDynamic(this, &AGXOpenAIRealtimeExample::HandleRealtimeConnectionError);
+        Service->OnDisconnectedBP.AddDynamic(this, &AGXOpenAIRealtimeExample::HandleRealtimeDisconnected);
+        Service->OnAudioResponseBP.AddDynamic(this, &AGXOpenAIRealtimeExample::HandleRealtimeAudioResponse);
+        Service->OnUserTranscriptDeltaBP.AddDynamic(this, &AGXOpenAIRealtimeExample::HandleUserTranscriptDelta);
+        Service->OnAssistantTranscriptDeltaBP.AddDynamic(this, &AGXOpenAIRealtimeExample::HandleAssistantTranscriptDelta);
+        Service->OnServerSpeechStartedBP.AddDynamic(this, &AGXOpenAIRealtimeExample::HandleServerSpeechStarted);
+        Service->OnServerSpeechStoppedBP.AddDynamic(this, &AGXOpenAIRealtimeExample::HandleServerSpeechStopped);
     }
 
-    if (AudioCapture)
+    if (auto* Capture = Cast<URealtimeAudioCaptureComponent>(AudioCapture))
     {
-        AudioCapture->OnAudioGenerated.AddUObject(this, &AGXOpenAIRealtimeExample::HandleAudioGenerated);
+        Capture->OnAudioGenerated.AddUObject(this, &AGXOpenAIRealtimeExample::HandleAudioGenerated);
     }
     
     if (AIAudioPlayer)
     {
         AIAudioPlayer->OnAudioFinished.AddDynamic(this, &AGXOpenAIRealtimeExample::OnAIAudioFinished);
     }
+#endif
 }
 
 void AGXOpenAIRealtimeExample::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+#if WITH_GENAI_MODULE
     ToggleConversation(false);
+#endif
     Super::EndPlay(EndPlayReason);
 }
 
 void AGXOpenAIRealtimeExample::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
-
+#if WITH_GENAI_MODULE
     FString UserDelta;
     while (PendingUserTranscriptDeltas.Dequeue(UserDelta))
     {
@@ -75,13 +83,16 @@ void AGXOpenAIRealtimeExample::Tick(float DeltaSeconds)
     {
         OnAssistantTranscriptUpdated.Broadcast(AssistantTranscript);
     }
+#endif
 }
 
 void AGXOpenAIRealtimeExample::ToggleConversation(bool bShouldStart, const FString& Model, const FString& SystemPrompt)
 {
+#if WITH_GENAI_MODULE
+    auto* Service = Cast<UGenOAIRealtime>(RealtimeService);
     if (bShouldStart)
     {
-        if (CurrentState != ERealtimeConversationState::Idle || !RealtimeService) return;
+        if (CurrentState != ERealtimeConversationState::Idle || !Service) return;
         
         SetState(ERealtimeConversationState::Connecting);
         
@@ -95,15 +106,19 @@ void AGXOpenAIRealtimeExample::ToggleConversation(bool bShouldStart, const FStri
         Settings.bServerVADCreateResponse = bServerVADCreateResponse;
         Settings.bServerVADInterruptResponse = bServerVADInterruptResponse;
         
-        RealtimeService->ConnectWithSettings(Settings, false);
+        Service->ConnectWithSettings(Settings, false);
     }
     else
     {
-        if (CurrentState == ERealtimeConversationState::Idle || !RealtimeService) return;
-        RealtimeService->DisconnectFromServer();
+        if (CurrentState == ERealtimeConversationState::Idle || !Service) return;
+        Service->DisconnectFromServer();
     }
+#else
+    UE_LOG(LogTemp, Warning, TEXT("GenAI module is not available. ToggleConversation will do nothing."));
+#endif
 }
 
+#if WITH_GENAI_MODULE
 void AGXOpenAIRealtimeExample::HandleRealtimeConnected(const FString& SessionId)
 {
     AIResponseWave = NewObject<USoundWaveProcedural>();
@@ -113,8 +128,11 @@ void AGXOpenAIRealtimeExample::HandleRealtimeConnected(const FString& SessionId)
     AIResponseWave->SoundGroup = SOUNDGROUP_Voice;
     AIResponseWave->bLooping = false;
     AIAudioPlayer->SetSound(AIResponseWave);
-    
-    AudioCapture->Activate();
+
+    if (auto* Capture = Cast<URealtimeAudioCaptureComponent>(AudioCapture))
+    {
+        Capture->Activate();
+    }
     
     SetState(ERealtimeConversationState::Connected_Ready);
 }
@@ -154,7 +172,7 @@ void AGXOpenAIRealtimeExample::HandleAudioGenerated(const float* InAudio, int32 
 {
     if (CurrentState != ERealtimeConversationState::Idle && CurrentState != ERealtimeConversationState::Connecting)
     {
-        if (RealtimeService)
+        if (auto* Service = Cast<UGenOAIRealtime>(RealtimeService))
         {
             
             const TArray<uint8> ConvertedAudio = UGenAIAudioUtils::ConvertAudioToPCM16Mono24kHz(InAudio, NumSamples, 2);
@@ -162,7 +180,7 @@ void AGXOpenAIRealtimeExample::HandleAudioGenerated(const float* InAudio, int32 
             {
                 UE_LOG(LogRealtimeFSM, Verbose, TEXT("Sending %d samples of audio to server."), NumSamples);
                 
-                RealtimeService->SendAudioToServer(ConvertedAudio);
+                Service->SendAudioToServer(ConvertedAudio);
             }
         }
     }
@@ -223,7 +241,24 @@ void AGXOpenAIRealtimeExample::SetState(ERealtimeConversationState NewState)
 
     if (NewState == ERealtimeConversationState::Idle)
     {
-        if (AudioCapture && AudioCapture->IsActive()) AudioCapture->Deactivate();
+        if (auto* Capture = Cast<URealtimeAudioCaptureComponent>(AudioCapture))
+        {
+            if (Capture->IsActive()) Capture->Deactivate();
+        }
         if (AIAudioPlayer && AIAudioPlayer->IsPlaying()) AIAudioPlayer->Stop();
     }
 }
+#else
+// Dummy implementations for when the module is not available
+void AGXOpenAIRealtimeExample::HandleRealtimeConnected(const FString& SessionId) {}
+void AGXOpenAIRealtimeExample::HandleRealtimeConnectionError(int32 StatusCode, const FString& Reason, bool bWasClean) {}
+void AGXOpenAIRealtimeExample::HandleRealtimeDisconnected() {}
+void AGXOpenAIRealtimeExample::HandleRealtimeAudioResponse(const TArray<uint8>& AudioData) {}
+void AGXOpenAIRealtimeExample::HandleUserTranscriptDelta(const FString& TranscriptDelta) {}
+void AGXOpenAIRealtimeExample::HandleAssistantTranscriptDelta(const FString& TranscriptDelta) {}
+void AGXOpenAIRealtimeExample::HandleServerSpeechStarted(const FString& ItemId) {}
+void AGXOpenAIRealtimeExample::HandleServerSpeechStopped(const FString& ItemId) {}
+void AGXOpenAIRealtimeExample::OnAIAudioFinished() {}
+void AGXOpenAIRealtimeExample::HandleAudioGenerated(const float* InAudio, int32 NumSamples) {}
+void AGXOpenAIRealtimeExample::SetState(ERealtimeConversationState NewState) {}
+#endif
