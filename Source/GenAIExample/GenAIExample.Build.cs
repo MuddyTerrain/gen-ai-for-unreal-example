@@ -19,7 +19,7 @@ public class GenAIExample : ModuleRules
 		if (Directory.Exists(ProjectGenAIPluginPath) || Directory.Exists(EngineGenAIPluginPath))
 		{
 			PublicDependencyModuleNames.Add("GenAI");
-			PublicDefinitions.Add("WITH_GENAI_MODULE=0");
+			PublicDefinitions.Add("WITH_GENAI_MODULE=1");
 		}
 		else
 		{
