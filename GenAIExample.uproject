@@ -27,6 +27,11 @@
 			"Name": "GenAIForUnreal",
 			"Enabled": true,
 			"MarketplaceURL": "com.epicgames.launcher://ue/Fab/product/68e7f092-1fea-4e6d-8d31-c6b96b06a02e"
+		},
+		{
+			"Name": "unreal-ollama",
+			"Enabled": true,
+			"MarketplaceURL": "com.epicgames.launcher://ue/Fab/product/"
 		}
 	]
 }

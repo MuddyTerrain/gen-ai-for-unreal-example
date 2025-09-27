@@ -4,3 +4,6 @@
 [submodule "Plugins/GenAIChineseModels"]
 	path = Plugins/GenAIChineseModels
 	url = https://github.com/MuddyTerrain/GenAIChineseModels
+[submodule "Plugins/unreal-ollama"]
+	path = Plugins/unreal-ollama
+	url = https://github.com/MuddyTerrain/unreal-ollama
