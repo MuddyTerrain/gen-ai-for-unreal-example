@@ -21,7 +21,7 @@
 		{
 			"Name": "GenAIChineseModels",
 			"Enabled": true,
-			"MarketplaceURL": "com.epicgames.launcher://ue/Fab/product/..."
+			"MarketplaceURL": "com.epicgames.launcher://ue/Fab/product/73b2e976-db06-46a5-a144-defecdc3004a"
 		},
 		{
 			"Name": "GenAIForUnreal",
@@ -29,9 +29,9 @@
 			"MarketplaceURL": "com.epicgames.launcher://ue/Fab/product/68e7f092-1fea-4e6d-8d31-c6b96b06a02e"
 		},
 		{
-			"Name": "unreal-ollama",
+			"Name": "UnrealOllama",
 			"Enabled": true,
-			"MarketplaceURL": "com.epicgames.launcher://ue/Fab/product/"
+			"MarketplaceURL": "com.epicgames.launcher://ue/Fab/product/9fa03e53-8250-45a6-b291-8f04d03e103d"
 		}
 	]
 }
