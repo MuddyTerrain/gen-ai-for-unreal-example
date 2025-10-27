@@ -19,7 +19,7 @@ AGXOpenAIRealtimeExample::AGXOpenAIRealtimeExample()
 #if WITH_GENAI_MODULE
     PrimaryActorTick.bCanEverTick = true;
     CurrentState = ERealtimeConversationState::Idle;
-    AudioCapture = CreateDefaultSubobject<URealtimeAudioCaptureComponent>(TEXT("AudioCapture"));
+    // Do NOT create the audio capture component here. It will crash the editor on load.
     AIAudioPlayer = CreateDefaultSubobject<UAudioComponent>(TEXT("AIAudioPlayer"));
 #endif
 }
@@ -28,6 +28,13 @@ void AGXOpenAIRealtimeExample::BeginPlay()
 {
     Super::BeginPlay();
 #if WITH_GENAI_MODULE
+    // Dynamically create the audio capture component here to ensure the audio engine is ready.
+    AudioCapture = NewObject<URealtimeAudioCaptureComponent>(this, TEXT("AudioCapture"));
+    if (AudioCapture)
+    {
+        AudioCapture->RegisterComponent(); // Important to register the new component
+    }
+    
     RealtimeService = UGenOAIRealtime::CreateRealtimeService(this);
     if (auto* Service = Cast<UGenOAIRealtime>(RealtimeService))
     {
@@ -43,7 +50,7 @@ void AGXOpenAIRealtimeExample::BeginPlay()
 
     if (auto* Capture = Cast<URealtimeAudioCaptureComponent>(AudioCapture))
     {
-        Capture->OnAudioGenerated.AddUObject(this, &AGXOpenAIRealtimeExample::HandleAudioGenerated);
+        Capture->OnAudioGenerated_Native.AddUObject(this, &AGXOpenAIRealtimeExample::HandleAudioGenerated);
     }
     
     if (AIAudioPlayer)

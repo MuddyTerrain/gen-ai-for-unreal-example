@@ -100,8 +100,8 @@ private:
     UPROPERTY()
     TObjectPtr<UObject> RealtimeService;
     
-    UPROPERTY(VisibleAnywhere)
-    TObjectPtr<UObject> AudioCapture;
+    UPROPERTY(VisibleAnywhere, Category = "Components")
+    TObjectPtr<URealtimeAudioCaptureComponent> AudioCapture;
     
     UPROPERTY()
     TObjectPtr<UAudioComponent> AIAudioPlayer;
