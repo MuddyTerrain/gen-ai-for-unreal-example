@@ -14,12 +14,12 @@ public class GenAIExample : ModuleRules
 		PrivateDependencyModuleNames.AddRange(new string[] { "AudioMixer", "AudioCapture" });
 
 		// Check if the GenAIForUnreal plugin directory exists as a project or engine plugin
-		string ProjectGenAIPluginPath = Path.Combine(ModuleDirectory, "..", "..", "Plugins", "GenAIForUnreal");
-		string EngineGenAIPluginPath = Path.Combine(EngineDirectory, "Plugins", "Fab", "GenAIForUnreal");
-		if (Directory.Exists(ProjectGenAIPluginPath) || Directory.Exists(EngineGenAIPluginPath))
+		string projectGenAiPluginPath = Path.Combine(ModuleDirectory, "..", "..", "Plugins", "GenAIForUnreal");
+		string engineGenAiPluginPath = Path.Combine(EngineDirectory, "Plugins", "Fab", "GenAIForUnreal");
+		if (Directory.Exists(projectGenAiPluginPath) || Directory.Exists(engineGenAiPluginPath))
 		{
 			PublicDependencyModuleNames.Add("GenAI");
-			PublicDefinitions.Add("WITH_GENAI_MODULE=0");
+			PublicDefinitions.Add("WITH_GENAI_MODULE=1");
 		}
 		else
 		{

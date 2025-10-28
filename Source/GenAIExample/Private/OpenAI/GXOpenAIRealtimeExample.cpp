@@ -103,17 +103,17 @@ void AGXOpenAIRealtimeExample::ToggleConversation(bool bShouldStart, const FStri
         
         SetState(ERealtimeConversationState::Connecting);
         
-        FGenOAIRealtimeSessionSettings Settings;
+        FGenOAIRealtimeNoVADSettings Settings;
         Settings.Model = Model;
         Settings.SystemInstructions = SystemPrompt;
-        Settings.bEnableServerVAD = bEnableServerVAD;
-        Settings.ServerVADThreshold = ServerVADThreshold;
-        Settings.ServerVADSilenceMs = ServerVADSilenceMs;
-        Settings.ServerVADPrefixPaddingMs = ServerVADPrefixPaddingMs;
-        Settings.bServerVADCreateResponse = bServerVADCreateResponse;
-        Settings.bServerVADInterruptResponse = bServerVADInterruptResponse;
+        // Settings.bEnableServerVAD = bEnableServerVAD;
+        // Settings.ServerVADThreshold = ServerVADThreshold;
+        // Settings.ServerVADSilenceMs = ServerVADSilenceMs;
+        // Settings.ServerVADPrefixPaddingMs = ServerVADPrefixPaddingMs;
+        // Settings.bServerVADCreateResponse = bServerVADCreateResponse;
+        // Settings.bServerVADInterruptResponse = bServerVADInterruptResponse;
         
-        Service->ConnectWithSettings(Settings, false);
+        Service->ConnectWithoutVAD(Settings);
     }
     else
     {
